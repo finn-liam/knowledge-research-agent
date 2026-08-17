@@ -3,6 +3,7 @@
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
+[![CI](https://github.com/feiyangchen1910/knowledge-research-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/feiyangchen1910/knowledge-research-agent/actions/workflows/ci.yml)
 [![Python 3.11](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
 [![React 18](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-1.x-orange.svg)](https://www.langchain.com/langgraph)
@@ -204,4 +205,5 @@ python eval/scripts/eval_run.py --gen 10 --save-baseline
 - [ ] 表格结构化（Docling/PP-Structure 评估）
 - [ ] 企业能力：认证（JWT/SSO）、RBAC、审计
 - [ ] 生产化：PostgreSQL / Redis Pub-Sub / Celery
-- [ ] CI/CD（pytest 整合 + GitHub Actions）
+- [x] CI（GitHub Actions：后端编译检查 + 前端 lint/build）
+- [ ] pytest 单元测试套件

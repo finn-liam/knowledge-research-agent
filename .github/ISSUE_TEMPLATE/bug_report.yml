@@ -1,0 +1,48 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "Thanks for reporting a bug. Please fill in the following information."
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: What happened? What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start services with `docker compose up -d qdrant`
+        2. Start backend with `uvicorn app.main:app`
+        3. Ask the question "..."
+        4. Observe ...
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: e.g. Windows 11 / Python 3.11.9 / Node 20 / Qdrant 1.18
+  - type: input
+    id: mode
+    attributes:
+      label: Running mode
+      description: With API keys (DeepSeek/Tavily/VLM) or Mock mode?
+      placeholder: e.g. Mock mode (all keys empty)
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / error output
+      description: Paste relevant terminal output or SSE error messages.
+      render: shell
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots (optional)
+      description: Drag and drop screenshots here if applicable.
