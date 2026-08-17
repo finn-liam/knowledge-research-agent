@@ -1,7 +1,6 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useResearchStore } from "@/features/research/researchStore";
 import type { SourceItem } from "@/types";
 import { ChunkViewerDialog } from "./ChunkViewerDialog";
@@ -79,25 +78,24 @@ function SourcesPanelInner({ sources }: { sources: SourceItem[] }) {
           </TabsList>
         </Tabs>
 
-        <ScrollArea className="mt-3 max-h-[380px]">
-          <div className="space-y-2 pr-1">
-            {filtered.map((s) => (
-              <SourceItemCard
-                key={`${s.ref_no}-${s.title}`}
-                source={s}
-                selected={s.ref_no === selectedRefNo}
-                expanded={s.ref_no === expandedRef}
-                onToggle={() => handleToggle(s.ref_no)}
-                onViewFull={setViewerSource}
-              />
-            ))}
-            {filtered.length === 0 && (
-              <div className="py-6 text-center text-xs text-muted-foreground">
-                该分类下暂无来源
-              </div>
-            )}
-          </div>
-        </ScrollArea>
+        {/* 列表随右栏自然滚动（移除嵌套 ScrollArea，避免滚轮被多层容器吃掉） */}
+        <div className="mt-3 space-y-2 pr-1">
+          {filtered.map((s) => (
+            <SourceItemCard
+              key={`${s.ref_no}-${s.title}`}
+              source={s}
+              selected={s.ref_no === selectedRefNo}
+              expanded={s.ref_no === expandedRef}
+              onToggle={() => handleToggle(s.ref_no)}
+              onViewFull={setViewerSource}
+            />
+          ))}
+          {filtered.length === 0 && (
+            <div className="py-6 text-center text-xs text-muted-foreground">
+              该分类下暂无来源
+            </div>
+          )}
+        </div>
 
         <button className="mt-3 w-full text-center text-xs font-medium text-primary hover:underline">
           Show all {sources.length} sources →
