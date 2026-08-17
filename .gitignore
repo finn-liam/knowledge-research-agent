@@ -3,7 +3,7 @@ node_modules/
 dist/
 
 # 模型（4.4GB，不入库；用 scripts/download_models.py 下载）
-models/
+/models/
 
 # Python
 __pycache__/
