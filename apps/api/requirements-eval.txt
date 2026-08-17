@@ -1,0 +1,4 @@
+# 评估体系可选依赖（仅运行 eval/scripts 时安装）
+# pip install -r requirements-eval.txt
+ragas>=0.4
+matplotlib>=3.8

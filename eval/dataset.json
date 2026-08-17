@@ -1,0 +1,476 @@
+[
+  {
+    "id": "q01",
+    "question": "根据图中描述，在Reality capture中创建正射投影的先决条件是什么？工具在什么情况下被激活？",
+    "ground_truth": "先决条件是必须重建并选择一个模型。只有在指定了项目区域之后，此工具才被激活；如果跳过这一步，邻位工具将自动检测到合理区域，用户仍然可以调整它。",
+    "relevant_chunks": [
+      "37#18",
+      "37#19",
+      "37#20"
+    ],
+    "doc_name": "RealityCapture中文教程.pdf",
+    "type": "chart"
+  },
+  {
+    "id": "q02",
+    "question": "在代码中，如何将文件名（不含扩展名）赋值给文档元数据的 dish_name 字段？",
+    "ground_truth": "使用语句 doc.metadata['dish_name'] = file_path.stem，其中 file_path.stem 表示文件路径中去掉扩展名后的名称，该名称会被赋值给 doc.metadata 字典中键为 'dish_name' 的元素。",
+    "relevant_chunks": [
+      "29#10",
+      "29#11",
+      "29#12"
+    ],
+    "doc_name": "chapter8_02_data_preparation.md",
+    "type": "fact"
+  },
+  {
+    "id": "q03",
+    "question": "LangChain 中的“文本到 Cypher”技术是如何将自然语言问题转换为图数据库查询的？",
+    "ground_truth": "该技术利用大语言模型（LLM）将用户的自然语言问题直接翻译成 Cypher 查询语句。其工作流程包括：接收自然语言问题，LLM 根据图谱模式将问题转换为 Cypher 查询，在图数据库上执行查询获取结构化数据，可选地将结果交由 LLM 生成自然语言答案。由于生成有效的 Cypher 查询较复杂，通常使用性能较强的 LLM 来确保转换准确性。",
+    "relevant_chunks": [
+      "20#11",
+      "20#12",
+      "20#13"
+    ],
+    "doc_name": "chapter4_12_query_construction.md",
+    "type": "fact"
+  },
+  {
+    "id": "q04",
+    "question": "如何加载本地保存的FAISS向量库？",
+    "ground_truth": "可以使用FAISS.load_local方法加载本地FAISS向量库，需要传入本地路径local_faiss_path、嵌入模型embeddings，并设置allow_dangerous_deserialization=True以允许反序列化。",
+    "relevant_chunks": [
+      "16#9",
+      "16#10",
+      "16#11"
+    ],
+    "doc_name": "chapter3_08_vector_db.md",
+    "type": "fact"
+  },
+  {
+    "id": "q05",
+    "question": "结合表格及说明，分析RAGAS、LlamaIndex和Phoenix三种RAG评估工具在核心机制、独特技术、适用场景上的差异，并说明它们在实际应用中应如何配合使用？",
+    "ground_truth": "RAGAS基于LLM驱动评估，通过合成数据生成和无参考评估架构，适用于对比不同RAG策略及版本迭代后的性能回归测试；LlamaIndex采用嵌入式评估，拥有异步评估引擎和模块化BaseEvaluator，适合开发中快速验证组件或管道效果；Phoenix则侧重追踪分析，利用分布式追踪和向量聚类分析，用于生产环境监控、Bad Case分析和数据漂移检测。三者并非互斥，实践中可结合使用，从评估架构、开发调试和生产监控等多个维度获得对RAG系统更全面、多维度的洞察。",
+    "relevant_chunks": [
+      "26#14",
+      "26#15",
+      "26#16"
+    ],
+    "doc_name": "chapter6_19_common_tools.md",
+    "type": "analysis"
+  },
+  {
+    "id": "q06",
+    "question": "在代码中，如何获取并记录图查询的查询类型？",
+    "ground_truth": "通过调用 self.understand_graph_query(query) 得到 graph_query 对象，然后使用 graph_query.query_type.value 获取查询类型，并通过 logger.info 记录查询类型信息。",
+    "relevant_chunks": [
+      "35#26",
+      "35#27",
+      "35#28"
+    ],
+    "doc_name": "chapter9_04_intelligent_query_routing.md",
+    "type": "fact"
+  },
+  {
+    "id": "q07",
+    "question": "根据该片段，RAG（检索增强生成）技术的核心是什么？",
+    "ground_truth": "RAG的核心是将模型内部的参数化知识与来自外部知识库的非参数化知识相结合。其运作逻辑是在LLM生成文本前，先通过检索机制从外部知识库中动态获取相关信息，并将这些参考资料融入生成过程，从而提升输出的准确性和时效性。",
+    "relevant_chunks": [
+      "8#0",
+      "8#1"
+    ],
+    "doc_name": "chapter1_01_RAG_intro.md",
+    "type": "fact"
+  },
+  {
+    "id": "q08",
+    "question": "该竞赛旨在培养学生哪些方面的能力？",
+    "ground_truth": "该竞赛旨在实现VibeCoding理念，掌握用自然语言驱动代码生成的开发模式，提升AI工具应用能力，熟练使用Claude Code、Cursor等AI编程工具及提示词工程技巧，培养全栈项目能力，完成从UI设计到云端部署的完整项目链路，积累竞赛项目经验，形成规范化文档体系和AI协作工作流，并学会利用AI学习AI知识，形成工具使用加知识获取的双轮驱动学习模式。",
+    "relevant_chunks": [
+      "5#0",
+      "5#1"
+    ],
+    "doc_name": "bigdata-ai.docx",
+    "type": "fact"
+  },
+  {
+    "id": "q09",
+    "question": "结合章节内容，分析为什么用户原始问题需要经过查询重构与分发？其中查询翻译和查询路由各起什么作用？",
+    "ground_truth": "用户的原始问题往往不是最优检索输入，可能过于复杂、有歧义或与文档措辞不一致，因此需要在检索前进行预处理。查询翻译负责将原始问题转换成一个或多个更适合检索的形式，以提升检索效果；查询路由则根据问题性质将其智能分发到最合适的数据源或检索器，确保信息获取的准确性和效率。两者共同构成了查询重构与分发的关键环节，优化了从问题到答案的完整链路。",
+    "relevant_chunks": [
+      "22#0",
+      "22#1"
+    ],
+    "doc_name": "chapter4_14_query_rewriting.md",
+    "type": "analysis"
+  },
+  {
+    "id": "q10",
+    "question": "根据文档片段，进行基础配置包括哪些步骤？",
+    "ground_truth": "基础配置包括导入必要的库、加载环境变量以及下载嵌入模型。示例代码中导入了 os 库。",
+    "relevant_chunks": [
+      "10#5",
+      "10#6",
+      "10#7"
+    ],
+    "doc_name": "chapter1_03_get_start_rag.md",
+    "type": "fact"
+  },
+  {
+    "id": "q11",
+    "question": "在文档向量化过程中，如果某个文档向量化失败，代码会如何处理？",
+    "ground_truth": "代码会捕获异常，并使用 logger.error 记录该文档向量化失败的错误信息，然后通过 continue 跳过当前文档，继续处理后续文档。",
+    "relevant_chunks": [
+      "34#5",
+      "34#6",
+      "34#7"
+    ],
+    "doc_name": "chapter9_03_index_construction.md",
+    "type": "fact"
+  },
+  {
+    "id": "q12",
+    "question": "根据文档片段，在创建HNSW索引时使用了哪些关键参数，以及索引创建成功后的状态是什么？",
+    "ground_truth": "在创建HNSW索引时，使用了M=16和efConstruction=256两个关键参数，并采用COSINE作为距离度量。索引创建成功后，describe_index返回的状态为'Finished'，表明索引已成功构建。",
+    "relevant_chunks": [
+      "17#32",
+      "17#33",
+      "17#34"
+    ],
+    "doc_name": "chapter3_09_milvus.md",
+    "type": "fact"
+  },
+  {
+    "id": "q13",
+    "question": "根据本章节内容，如何在不同操作系统上使用 uv 创建指定 Python 版本的虚拟环境，以及创建成功后的提示信息有哪些不同？",
+    "ground_truth": "使用 uv venv 命令创建虚拟环境，命令格式为 `uv venv rag --python 3.12.7`，其中 rag 是虚拟环境名称，Python 版本为 3.12.7。Windows 系统创建成功后提示 `Activate with: rag\\Scripts\\activate`，而 Linux/MacOS 系统则使用 `source rag/bin/activate` 进行激活。不同操作系统在命令展示和激活路径上存在差异。",
+    "relevant_chunks": [
+      "11#1",
+      "11#2",
+      "11#3"
+    ],
+    "doc_name": "chapter1_virtualenv.md",
+    "type": "analysis"
+  },
+  {
+    "id": "q14",
+    "question": "根据该片段中的classDef样式定义，startup、config、userInput、routing、rewrite、retrieval、generation、output等各类组件分别使用什么颜色的填充色和边框色？",
+    "ground_truth": "startup使用#e3f2fd填充和#0277bd边框；config使用#f1f8e9填充和#388e3c边框；userInput使用#e1f5fe填充和#01579b边框；routing使用#f3e5f5填充和#4a148c边框；rewrite使用#e8eaf6填充和#3f51b5边框；retrieval使用#e8f5e8填充和#1b5e20边框；generation使用#fff3e0填充和#e65100边框；output使用#fce4ec填充和#880e4f边框。",
+    "relevant_chunks": [
+      "28#15",
+      "28#16",
+      "28#17"
+    ],
+    "doc_name": "chapter8_01_env_architecture.md",
+    "type": "fact"
+  },
+  {
+    "id": "q15",
+    "question": "根据表格内容，RRF、RankLLM、Cross-Encoder 和 ColBERT 分别适用于什么场景？",
+    "ground_truth": "RRF 适用于多路召回结果融合；RankLLM 适用于高价值语义理解场景；Cross-Encoder 适用于 Top-K 精排；ColBERT 适用于 Top-K 重排。",
+    "relevant_chunks": [
+      "23#3",
+      "23#4",
+      "23#5"
+    ],
+    "doc_name": "chapter4_15_advanced_retrieval_techniques.md",
+    "type": "fact"
+  },
+  {
+    "id": "q16",
+    "question": "查询构建技术除了处理扁平化的元数据，还能应用于什么样的数据结构？",
+    "ground_truth": "查询构建技术除了处理扁平化的元数据，还能应用于更复杂的数据结构，例如图数据库。",
+    "relevant_chunks": [
+      "20#9",
+      "20#10",
+      "20#11"
+    ],
+    "doc_name": "chapter4_12_query_construction.md",
+    "type": "fact"
+  },
+  {
+    "id": "q17",
+    "question": "在RAG系统的语义检索流程中，离线索引构建和在线查询检索分别需要完成哪些关键步骤？为什么要求使用同一个Embedding模型，以及相似度计算和Top-K召回是如何影响最终生成答案的？",
+    "ground_truth": "RAG的语义检索首先在离线阶段将知识库文档切分为块，并用Embedding模型将每个块转换为向量存入向量数据库；在线阶段则用同一个Embedding模型将用户问题转换为向量，以保证问题和文档块处于相同的向量空间中，从而能正确计算相似度。随后在向量数据库中计算问题向量与所有文档块向量的相似度，并选取最高的Top-K个文档块作为上下文，与原始问题一起交给大语言模型生成答案。使用同一个模型是确保语义可比性的关键，而Top-K的选取则平衡了相关性和上下文长度，直接影响生成答案的准确性与丰富度。",
+    "relevant_chunks": [
+      "14#1",
+      "14#2",
+      "14#3"
+    ],
+    "doc_name": "chapter3_06_vector_embedding.md",
+    "type": "analysis"
+  },
+  {
+    "id": "q18",
+    "question": "根据这段代码，如何创建一个带有格式指令的 PromptTemplate？",
+    "ground_truth": "通过设置 template 为包含 format_instructions 和 text 的字符串，input_variables 指定为 ['text']，并通过 partial_variables 将 format_instructions 绑定为 parser.get_format_instructions()，从而创建 PromptTemplate 实例。",
+    "relevant_chunks": [
+      "24#4",
+      "24#5",
+      "24#6"
+    ],
+    "doc_name": "chapter5_16_formatted_generation.md",
+    "type": "fact"
+  },
+  {
+    "id": "q19",
+    "question": "在给定的代码片段中，如何根据用户输入决定是否使用流式输出？",
+    "ground_truth": "代码通过 input 提示用户输入是否使用流式输出（y/n，默认y），并将输入转换为小写。如果用户输入的不是 'n'，则 use_stream 为 True，即使用流式输出；只有输入 'n' 时才不使用流式输出。",
+    "relevant_chunks": [
+      "31#39",
+      "31#40",
+      "31#41"
+    ],
+    "doc_name": "chapter8_04_generation_sys.md",
+    "type": "fact"
+  },
+  {
+    "id": "q20",
+    "question": "根据表10.2，MCP协议提供了哪三大核心能力？它们之间的主要区别是什么？",
+    "ground_truth": "MCP协议提供三大核心能力：Tools、Resources和Prompts。Tools是主动的（执行操作），Resources是被动的（提供数据），Prompts是指导性的（提供模板）。",
+    "relevant_chunks": [
+      "36#1190",
+      "36#1191",
+      "36#1192"
+    ],
+    "doc_name": "Hello-Agents-V1.0.2-20260210.pdf",
+    "type": "chart"
+  },
+  {
+    "id": "q21",
+    "question": "根据图中的 Star History 趋势，datawhalechina/hello-agents 项目的 GitHub Stars 在统计期间内整体变化趋势是怎样的？",
+    "ground_truth": "图中显示 datawhalechina/hello-agents 项目在统计期间（约2026年2月至2026年？）的 GitHub Stars 整体呈上升趋势。曲线从较低位置开始，持续增长并接近或达到20K。",
+    "relevant_chunks": [
+      "36#14",
+      "36#15",
+      "36#16"
+    ],
+    "doc_name": "Hello-Agents-V1.0.2-20260210.pdf",
+    "type": "chart"
+  },
+  {
+    "id": "q22",
+    "question": "根据该文档片段，如何使用Cypher查询所有水产类菜谱？",
+    "ground_truth": "使用MATCH (r:Recipe) WHERE r.category = \"水产\" RETURN r.name, r.difficulty, r.prepTime, r.cookTime。该查询会返回所有分类为“水产”的菜谱名称、难度、准备时间和烹饪时间。",
+    "relevant_chunks": [
+      "33#8",
+      "33#9",
+      "33#10"
+    ],
+    "doc_name": "chapter9_02_graph_data_modeling.md",
+    "type": "fact"
+  },
+  {
+    "id": "q23",
+    "question": "在计算RRF（Reciprocal Rank Fusion）分数时，代码是如何根据BM25结果的排名更新每个文档的分数的？",
+    "ground_truth": "对于enumerate(bm25_results)中的每个文档，获取其doc_id，然后通过rrf_scores[doc_id] = rrf_scores.get(doc_id, 0) + 1 / (k + rank + 1)累加分数。其中rank从0开始，k为常数，排名越靠前（rank越小），贡献的分数越大。",
+    "relevant_chunks": [
+      "30#20",
+      "30#21",
+      "30#22"
+    ],
+    "doc_name": "chapter8_03_index_retrieval.md",
+    "type": "fact"
+  },
+  {
+    "id": "q24",
+    "question": "这个功能模块的作用和特点是什么？",
+    "ground_truth": "该功能通过分析查询特征，自动选择最适合的检索策略。其特点是由LLM驱动的查询分析，并支持动态策略选择。",
+    "relevant_chunks": [
+      "32#32",
+      "32#33",
+      "32#34"
+    ],
+    "doc_name": "chapter9_01_graph_rag_architecture.md",
+    "type": "fact"
+  },
+  {
+    "id": "q25",
+    "question": "图中展示的是什么内容？",
+    "ground_truth": "图中展示了一张三维场景重建的示意图，一个白色线框立方体包围着地形模型，模型表面呈现绿色植被和灰色裸地的纹理。左下角标注了“Reconstruction Box”，右上角有一个“2D”按钮，整体用于可视化重建过程中的目标区域。",
+    "relevant_chunks": [
+      "37#19",
+      "37#20",
+      "37#21"
+    ],
+    "doc_name": "RealityCapture中文教程.pdf",
+    "type": "chart"
+  },
+  {
+    "id": "q26",
+    "question": "句子窗口检索（Sentence Window Retrieval）的基本工作流程是什么？",
+    "ground_truth": "句子窗口检索在索引阶段将文档分割为单个句子，每个句子作为独立节点存入向量数据库，并在元数据中存储其前后N个句子的上下文窗口。检索阶段在单一句子节点上执行相似度搜索，以精确定位最相关的核心信息。后处理阶段利用MetadataReplacementPostProcessor读取检索到的节点元数据，用完整上下文窗口替换原有的单一句子内容。最后，包含丰富上下文的节点被传递给LLM生成最终答案。",
+    "relevant_chunks": [
+      "18#0",
+      "18#1",
+      "18#2"
+    ],
+    "doc_name": "chapter3_10_index_optimization.md",
+    "type": "fact"
+  },
+  {
+    "id": "q27",
+    "question": "根据给出的Cypher片段，如何查找共同包含“阿根廷红虾”的不同菜谱？",
+    "ground_truth": "可以使用MATCH (r1:Recipe)-[:REQUIRES]->(i:Ingredient)<-[:REQUIRES]-(r2:Recipe)来匹配两个菜谱包含同一食材，并通过WHERE限制食材名称为“阿根廷红虾”且r1.nodeId不等于r2.nodeId，最后返回r1.name、r2.name和i.name。",
+    "relevant_chunks": [
+      "33#11",
+      "33#12",
+      "33#13"
+    ],
+    "doc_name": "chapter9_02_graph_data_modeling.md",
+    "type": "fact"
+  },
+  {
+    "id": "q28",
+    "question": "传统RAG框架在处理复杂查询时存在哪些局限？GraphRAG是如何改进的？",
+    "ground_truth": "传统RAG框架处理复杂查询时，依赖非结构化文本向量检索，难以捕捉实体间深层关系，导致上下文检索不精确、信息碎片化，甚至诱发模型产生幻觉。GraphRAG将结构化知识图谱融入RAG流程，利用知识图谱的显式语义关系和图结构优势，提供更精准的上下文检索和更强的推理能力，在多跳查询和事实性要求较高的场景中表现尤为出色。",
+    "relevant_chunks": [
+      "27#0",
+      "27#1"
+    ],
+    "doc_name": "chapter7_20_kg_rag.md",
+    "type": "fact"
+  },
+  {
+    "id": "q29",
+    "question": "请结合向量数据库的四层架构和主要索引技术，说明它如何实现高效的高维向量相似性搜索。",
+    "ground_truth": "向量数据库通过存储层、索引层、查询层和服务层协同工作来实现高效相似性搜索：存储层负责向量与元数据的存储和分布式支持，索引层采用HNSW、LSH、PQ等算法构建索引以加速检索，查询层处理混合查询并优化执行，服务层提供连接管理、监控与安全能力。同时，基于树的方法（如Annoy）、哈希方法（如LSH）、图方法（如HNSW）和量化方法（如Faiss的IVF/PQ）分别从不同角度降低搜索复杂度，从而在保证召回效果的前提下显著提升大规模向量检索效率。",
+    "relevant_chunks": [
+      "16#1",
+      "16#2",
+      "16#3"
+    ],
+    "doc_name": "chapter3_08_vector_db.md",
+    "type": "analysis"
+  },
+  {
+    "id": "q30",
+    "question": "Visualized_BGE模型支持哪些模态的输入形式？",
+    "ground_truth": "Visualized_BGE支持纯文本、纯图像或图文组合的格式。纯文本编码保持原始BGE模型的文本嵌入能力，纯图像编码使用基于EVA-CLIP的视觉编码器，图文联合编码则将图像和文本特征融合到统一的向量空间。",
+    "relevant_chunks": [
+      "15#8",
+      "15#9",
+      "15#10"
+    ],
+    "doc_name": "chapter3_07_multimodal_embedding.md",
+    "type": "fact"
+  },
+  {
+    "id": "q31",
+    "question": "如何在 Cloud Studio 中通过 Git 仓库创建应用并再次进入编写代码？",
+    "ground_truth": "先访问 Cloud Studio 并登录或注册账号，然后在导航栏点击“创建应用”，选择“从 Git 仓库导入”，在项目地址栏输入 https://github.com/datawhalechina/all-in-rag.git 并回车，系统会自动生成标题和描述。创建后可在应用管理页面找到该应用，点击并选择右上角“编写代码”即可再次进入。",
+    "relevant_chunks": [
+      "9#7",
+      "9#8",
+      "9#9"
+    ],
+    "doc_name": "chapter1_02_preparation.md",
+    "type": "fact"
+  },
+  {
+    "id": "q32",
+    "question": "ChunkViz 是什么工具？它有哪些功能？",
+    "ground_truth": "ChunkViz 是一个用于生成分块图的工具，可以将文档和分块配置作为输入。它用不同的颜色块展示每个 chunk 的边界和重叠部分，方便快速理解分块逻辑。",
+    "relevant_chunks": [
+      "13#21",
+      "13#22",
+      "13#23"
+    ],
+    "doc_name": "chapter2_05_text_chunking.md",
+    "type": "fact"
+  },
+  {
+    "id": "q33",
+    "question": "在图中展示的ELIZA对话示例中，用户输入“I am feeling sad today.”后，系统给出了什么回应？随后用户输入“quit”时系统如何回应？",
+    "ground_truth": "当用户输入“I am feeling sad today.”时，系统回应“How long have you been feeling sad today?”；当用户输入“quit”时，系统回应“Goodbye. It was nice talking to you.”并结束对话。",
+    "relevant_chunks": [
+      "36#105",
+      "36#106",
+      "36#107"
+    ],
+    "doc_name": "Hello-Agents-V1.0.2-20260210.pdf",
+    "type": "chart"
+  },
+  {
+    "id": "q34",
+    "question": "该片段中加粗显示的工具名称是什么？",
+    "ground_truth": "片段中加粗显示的工具名称是 PyMuPDF4LLM。这是一个出现在表格单元格中的文本。",
+    "relevant_chunks": [
+      "12#6",
+      "12#7",
+      "12#8"
+    ],
+    "doc_name": "chapter2_04_data_load.md",
+    "type": "fact"
+  },
+  {
+    "id": "q35",
+    "question": "根据文档，评估过程实际上可以拆解为哪两个主要环节？",
+    "ground_truth": "评估过程实际上可以拆解为两个主要环节：检索评估和响应评估。虽然评估被分成了三个部分，但核心环节是这两个。",
+    "relevant_chunks": [
+      "25#1",
+      "25#2",
+      "25#3"
+    ],
+    "doc_name": "chapter6_18_system_evaluation.md",
+    "type": "fact"
+  },
+  {
+    "id": "q36",
+    "question": "根据片段内容，LLM在生成SQL语句时面临哪些主要挑战？",
+    "ground_truth": "LLM可能产生‘幻觉’问题，想象出数据库中不存在的表或字段，导致生成的SQL语句无效。还需要准确理解数据库结构，包括表的结构、字段含义以及表间关联关系，才能生成正确的JOIN和WHERE子句。此外，用户提问可能存在拼写错误或不规范表达，模型需要具备容错和推理能力。",
+    "relevant_chunks": [
+      "21#0",
+      "21#1"
+    ],
+    "doc_name": "chapter4_13_text2sql.md",
+    "type": "fact"
+  },
+  {
+    "id": "q37",
+    "question": "Cloud Studio 作为国内环境推荐的云 IDE，它在环境配置方面有哪些特点？请结合章节内容说明。",
+    "ground_truth": "Cloud Studio 是腾讯云推出的基于浏览器的集成开发环境，适合国内环境使用。它支持CPU与GPU访问，能够满足不同计算需求。每月提供50个小时的免费额度，适合轻量级开发或学习使用。整体上，它无需本地安装，直接在云端进行环境配置与开发。",
+    "relevant_chunks": [
+      "9#6",
+      "9#7",
+      "9#8"
+    ],
+    "doc_name": "chapter1_02_preparation.md",
+    "type": "analysis"
+  },
+  {
+    "id": "q38",
+    "question": "如何使用 PowerShell 安装 uv，并验证安装是否成功？",
+    "ground_truth": "使用命令 `powershell -ExecutionPolicy ByPass -c \"irm https://astral.sh/uv/install.ps1 | iex\"` 安装 uv。安装成功后，按照提示添加环境变量，例如 `$env:Path = \"C:\\Users\\michaelbradley\\.local\\bin;$env:Path\"`，注意不同人的安装路径可能不同，需按提示自行复制粘贴。最后输入 `uv` 命令，如果出现相应提示，则说明安装成功。",
+    "relevant_chunks": [
+      "11#0",
+      "11#1"
+    ],
+    "doc_name": "chapter1_virtualenv.md",
+    "type": "fact"
+  },
+  {
+    "id": "q39",
+    "question": "在文档片段的稀疏向量搜索结果中，得分最高的条目是什么？请给出其名称、得分、路径和描述。",
+    "ground_truth": "得分最高的条目是“悬崖上的白龙”，得分0.2319，路径为../../data/C3/dragon/dragon02.png。描述为：一头雄伟的白色巨龙栖息在悬崖边缘，背景是金色的云霞和远方的海岸，它拥有巨大的翅膀和优雅的身姿，是典型的西方奇幻生物。",
+    "relevant_chunks": [
+      "19#35",
+      "19#36",
+      "19#37"
+    ],
+    "doc_name": "chapter4_11_hybrid_search.md",
+    "type": "fact"
+  },
+  {
+    "id": "q40",
+    "question": "在代码片段中，如果调用 self.create_collection(force_recreate=True) 返回 False，程序会执行什么操作？",
+    "ground_truth": "如果 self.create_collection(force_recreate=True) 的返回值为 False（即 not 条件成立），则函数会立即返回 False。这说明创建集合失败时，当前函数会将 False 作为结果返回，不再继续执行后续代码。",
+    "relevant_chunks": [
+      "34#15",
+      "34#16",
+      "34#17"
+    ],
+    "doc_name": "chapter9_03_index_construction.md",
+    "type": "fact"
+  }
+]

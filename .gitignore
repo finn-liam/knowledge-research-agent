@@ -1,0 +1,36 @@
+# 依赖
+node_modules/
+dist/
+
+# 模型（4.4GB，不入库；用 scripts/download_models.py 下载）
+models/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 数据与日志
+*.db
+*.db-journal
+*.log
+apps/api/kra.db
+
+# 环境（含 API Key，绝不入库）
+.env
+!.env.example
+
+# 运行时数据
+versions-backup.txt
+eval/results/
+apps/api/app/uploads/*
+!apps/api/app/uploads/.gitkeep
+
+# IDE
+.idea/
+.vscode/
+
+# 系统
+.DS_Store
+Thumbs.db

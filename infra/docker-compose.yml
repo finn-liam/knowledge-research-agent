@@ -1,0 +1,80 @@
+version: "3.9"
+
+# Knowledge Research Agent — 全栈部署（生产形态）
+# Phase 1 本地开发默认 SQLite 单进程（见 README「快速开始」），
+# 本 compose 用于 PostgreSQL/Qdrant/Neo4j/Redis/MinIO 全依赖一步拉起。
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: kra
+      POSTGRES_PASSWORD: kra_secret
+      POSTGRES_DB: kra
+    ports: ["5432:5432"]
+    volumes: [pg_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kra"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports: ["6333:6333"]
+    volumes: [qdrant_data:/qdrant/storage]
+
+  neo4j:
+    image: neo4j:5-community
+    environment:
+      NEO4J_AUTH: neo4j/kra_secret
+    ports: ["7474:7474", "7687:7687"]
+    volumes: [neo4j_data:/data]
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    volumes: [redis_data:/data]
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: kra
+      MINIO_ROOT_PASSWORD: kra_secret
+    ports: ["9000:9000", "9001:9001"]
+    volumes: [minio_data:/data]
+
+  api:
+    build: ../apps/api
+    environment:
+      DATABASE_URL: postgresql+asyncpg://kra:kra_secret@postgres:5432/kra
+      REDIS_URL: redis://redis:6379/0
+      QDRANT_URL: http://qdrant:6333
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_AUTH: neo4j/kra_secret
+      S3_ENDPOINT: http://minio:9000
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-v4-flash}
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+      HF_HOME: /models
+      HF_ENDPOINT: https://hf-mirror.com
+    ports: ["8000:8000"]
+    volumes: [../models:/models]
+    depends_on:
+      postgres: { condition: service_healthy }
+      qdrant: { condition: service_started }
+      neo4j: { condition: service_started }
+      redis: { condition: service_started }
+
+  web:
+    build: ../apps/web
+    ports: ["80:80"]
+    depends_on: [api]
+
+volumes:
+  pg_data:
+  qdrant_data:
+  neo4j_data:
+  redis_data:
+  minio_data:

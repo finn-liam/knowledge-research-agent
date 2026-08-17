@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 250 30% 99%;
+    --foreground: 240 10% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 15%;
+    --primary: 244 82% 69%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 245 60% 96%;
+    --secondary-foreground: 244 60% 45%;
+    --muted: 245 30% 96%;
+    --muted-foreground: 240 6% 46%;
+    --accent: 245 70% 96%;
+    --accent-foreground: 244 60% 45%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 245 25% 92%;
+    --input: 245 25% 90%;
+    --ring: 244 82% 69%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 248 25% 7%;
+    --foreground: 240 20% 96%;
+    --card: 248 22% 10%;
+    --card-foreground: 240 20% 96%;
+    --popover: 248 22% 12%;
+    --popover-foreground: 240 20% 96%;
+    --primary: 244 75% 72%;
+    --primary-foreground: 248 40% 10%;
+    --secondary: 248 18% 14%;
+    --secondary-foreground: 244 40% 85%;
+    --muted: 248 15% 16%;
+    --muted-foreground: 240 10% 65%;
+    --accent: 248 22% 18%;
+    --accent-foreground: 244 60% 88%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 248 15% 20%;
+    --input: 248 15% 24%;
+    --ring: 244 75% 72%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04";
+  }
+}
+
+/* Markdown report typography */
+.report-body h1 {
+  @apply text-xl font-bold mt-6 mb-3 text-foreground;
+}
+.report-body h2 {
+  @apply text-lg font-bold mt-6 mb-2.5 text-foreground;
+}
+.report-body h3 {
+  @apply text-base font-semibold mt-4 mb-2 text-foreground;
+}
+.report-body p {
+  @apply text-[15px] leading-7 text-foreground/90 my-2.5;
+}
+.report-body ul {
+  @apply list-disc pl-6 my-2 space-y-1.5 text-[15px] leading-7 text-foreground/90;
+}
+.report-body ol {
+  @apply list-decimal pl-6 my-2 space-y-1.5 text-[15px] leading-7 text-foreground/90;
+}
+.report-body strong {
+  @apply font-semibold text-foreground;
+}
+.report-body hr {
+  @apply my-5 border-border;
+}
+.report-body code {
+  @apply bg-muted rounded px-1.5 py-0.5 text-[13px];
+}
+
+/* Slim scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
