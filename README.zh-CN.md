@@ -18,7 +18,9 @@
 
 ## 📐 架构
 
-![架构图](docs/Diagram.png)
+<div align="center">
+  <img src="docs/Diagram.png" width="55%" alt="架构图" />
+</div>
 
 ```
 用户提问 → 意图路由（闲聊 | 知识问题）

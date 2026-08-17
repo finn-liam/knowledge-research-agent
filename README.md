@@ -18,7 +18,9 @@
 
 ## 📐 Architecture
 
-![Architecture](docs/Diagram.png)
+<div align="center">
+  <img src="docs/Diagram.png" width="55%" alt="Architecture" />
+</div>
 
 ```
 User Question → Query Router (chat | knowledge)
