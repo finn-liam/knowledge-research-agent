@@ -16,7 +16,7 @@ export function AppLayout() {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="flex h-screen flex-col overflow-hidden">
+      <div className="flex h-screen flex-col overflow-x-clip">
         <TopNav />
         <div className="flex min-h-0 flex-1">
           <AppSidebar />

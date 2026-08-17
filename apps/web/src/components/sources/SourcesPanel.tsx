@@ -58,9 +58,11 @@ function SourcesPanelInner({ sources }: { sources: SourceItem[] }) {
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="text-sm font-semibold">Sources ({sources.length})</div>
-          <button className="text-xs font-medium text-primary hover:underline">View all</button>
+        <div className="flex min-w-0 items-center justify-between gap-3">
+          <div className="min-w-0 truncate text-sm font-semibold">Sources ({sources.length})</div>
+          <button className="shrink-0 whitespace-nowrap text-xs font-medium text-primary hover:underline">
+            View all
+          </button>
         </div>
 
         <Tabs value={tab} onValueChange={setTab} className="mt-3">

@@ -69,7 +69,7 @@ export function GraphCanvas({ graph, height = 220 }: { graph: GraphData; height?
   }, [laidOut, setNodes, setEdges]);
 
   return (
-    <div style={{ height }} className="overflow-hidden rounded-lg">
+    <div style={{ height }} className="w-full overflow-hidden rounded-lg">
       <ReactFlow
         nodes={nodes}
         edges={edges}

@@ -10,9 +10,9 @@ function GraphMiniPanelInner({ graph, hint }: { graph: GraphData; hint?: string 
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="text-sm font-semibold">Knowledge Graph</div>
-          <button className="text-xs font-medium text-primary hover:underline">
+        <div className="flex min-w-0 items-center justify-between gap-3">
+          <div className="min-w-0 truncate text-sm font-semibold">Knowledge Graph</div>
+          <button className="shrink-0 whitespace-nowrap text-xs font-medium text-primary hover:underline">
             View full graph
           </button>
         </div>

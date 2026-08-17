@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 export function RightPanel({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <aside className={cn("w-[336px] shrink-0 border-l bg-background", className)}>
-      <ScrollArea className="h-full">
-        <div className="space-y-4 p-4">{children}</div>
+      <ScrollArea className="h-full w-full">
+        <div className="min-w-0 space-y-4 p-4">{children}</div>
       </ScrollArea>
     </aside>
   );
