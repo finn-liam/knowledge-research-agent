@@ -1,9 +1,10 @@
+import { memo } from "react";
 import { Download, MoreHorizontal, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 
 /** 研究页标题栏：报告标题 + 分享/导出/更多 */
-export function ReportHeader({
+function ReportHeaderInner({
   title,
   taskId,
   canExport,
@@ -35,3 +36,6 @@ export function ReportHeader({
     </div>
   );
 }
+
+/** memo：标题栏不随流式 token 变化重渲染 */
+export const ReportHeader = memo(ReportHeaderInner);

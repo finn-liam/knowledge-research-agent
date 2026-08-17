@@ -1,10 +1,11 @@
+import { memo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { GraphData } from "@/types";
 import { GraphCanvas } from "./GraphCanvas";
 import { GraphEmptyState } from "./GraphEmptyState";
 
 /** 右侧「Knowledge Graph」面板：空态插画 / 有数据时渲染迷你图谱（首页、研究页复用） */
-export function GraphMiniPanel({ graph, hint }: { graph: GraphData; hint?: string }) {
+function GraphMiniPanelInner({ graph, hint }: { graph: GraphData; hint?: string }) {
   const hasData = graph.nodes.length > 0;
   return (
     <Card>
@@ -22,3 +23,6 @@ export function GraphMiniPanel({ graph, hint }: { graph: GraphData; hint?: strin
     </Card>
   );
 }
+
+/** memo：图谱面板不随流式 token 变化重渲染 */
+export const GraphMiniPanel = memo(GraphMiniPanelInner);

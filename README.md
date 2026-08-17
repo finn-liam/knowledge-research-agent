@@ -114,6 +114,15 @@ python eval/scripts/eval_run.py --gen 10 --save-baseline
 
 **基线示例**（40 条数据集）：faithfulness 0.855 · 检索 precision 0.748 · KB 口径 0.772 · recall 0.501（多标注口径）。
 
+## 📊 数据统计口径说明
+
+首页右侧面板的数字均为**真实数据的实时统计**（非展示样例）：
+
+| 面板 | 口径 |
+|---|---|
+| **Sources** | 历史所有研究**真实检索到**的来源片段，按类型聚合计数（企业内部文档 / 学术论文 / 网页资源）；每次研究完成后自动增长 |
+| **Research Statistics** | 累计指标：Total Research=历史研究总次数；Knowledge Sources=累计检索来源总数；Documents Hit=累计命中文档总数；Accuracy Rate=历史平均相关度 |
+
 ## 🗂 目录结构
 
 ```

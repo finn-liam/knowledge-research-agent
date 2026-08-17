@@ -1,9 +1,10 @@
-"""LangGraph 装配（多源检索 + Self-RAG）：
+"""LangGraph 装配（意图路由 + 多源检索 + Self-RAG）：
 
-START → (kb_search ∥ paper_search ∥ web_search) → merger → grade
-   grade ──高相关──→ report_write → END
-   grade ──低分(<2次)──→ rewrite → 回到三路并行（重检索）
-   grade ──耗尽──→ report_write（"未找到足够相关信息"分支）
+START → router ──chat──→ report_write → END
+             └─knowledge→ (kb_search ∥ paper_search ∥ web_search) → merger → grade
+                 grade ──高相关──→ report_write → END
+                 grade ──低分(<2次)──→ rewrite → 回到三路并行（重检索）
+                 grade ──耗尽──→ report_write（"未找到足够相关信息"分支）
 
 知识图谱构建保持暂停（节点不在图中）。
 """
@@ -13,6 +14,13 @@ from app.agents import nodes
 from app.agents.state import ResearchState
 
 
+def route_after_router(state: ResearchState):
+    # 返回 path_map 的 key（chat/knowledge），而非目标节点名
+    if state.get("query_type") == "chat":
+        return "chat"
+    return "knowledge"
+
+
 def route_after_grade(state: ResearchState) -> str:
     return state.get("route", "report")
 
@@ -20,6 +28,8 @@ def route_after_grade(state: ResearchState) -> str:
 def build_graph():
     g = StateGraph(ResearchState)
 
+    g.add_node("router", nodes.router_node)
+    g.add_node("fanout", nodes.fanout_node)
     g.add_node("kb_search", nodes.kb_retriever_node)
     g.add_node("paper_search", nodes.paper_retriever_node)
     g.add_node("web_search", nodes.web_retriever_node)
@@ -28,11 +38,21 @@ def build_graph():
     g.add_node("rewrite", nodes.rewrite_node)
     g.add_node("report_write", nodes.report_writer_node)
 
-    # 三路并行扇出
-    g.add_edge(START, "kb_search")
-    g.add_edge(START, "paper_search")
-    g.add_edge(START, "web_search")
-    # 扇入融合
+    # 意图路由：chat 直接生成回复；knowledge 经 fanout 扇出三路并行检索
+    g.add_edge(START, "router")
+    g.add_conditional_edges(
+        "router",
+        route_after_router,
+        {
+            "chat": "report_write",
+            "knowledge": "fanout",
+        },
+    )
+    g.add_edge("fanout", "kb_search")
+    g.add_edge("fanout", "paper_search")
+    g.add_edge("fanout", "web_search")
+
+    # 三路扇入融合
     g.add_edge("kb_search", "merger")
     g.add_edge("paper_search", "merger")
     g.add_edge("web_search", "merger")

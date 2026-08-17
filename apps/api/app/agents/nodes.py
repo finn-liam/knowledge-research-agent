@@ -15,10 +15,12 @@ from app.agents import mock_data
 from app.agents.events import EVENT_BUS
 from app.agents.prompts import (
     CHART_REPORT_PROMPT,
+    CHAT_PROMPT,
     GRADE_PROMPT,
     QUERY_PROCESS_PROMPT,
     REPORT_PROMPT,
     REWRITE_PROMPT,
+    ROUTER_PROMPT,
     VERIFY_PROMPT,
 )
 from app.agents.state import ResearchState
@@ -27,7 +29,7 @@ from app.db.session import SessionLocal
 from app.integrations.arxiv_client import search_papers
 from app.integrations.web_search import search_web
 from app.llm.gateway import get_llm
-from app.models.research import Citation, Report, ResearchStep, ResearchTask, Source
+from app.models.research import STEP_DEFS, Citation, Report, ResearchStep, ResearchTask, Source
 
 MAX_KB_SOURCES = 8
 MAX_CHUNKS_PER_DOC = 3
@@ -82,6 +84,38 @@ def _emit_sources(task_id: str, sources: list[dict]) -> None:
                 "source_label": s.get("source_label", ""),
             },
         )
+
+
+# ---------------- 意图路由（chat / knowledge） ----------------
+
+async def fanout_node(state: ResearchState) -> dict:
+    """扇出占位节点：knowledge 路径经由它并行分发到三路检索。"""
+    return {}
+
+
+async def router_node(state: ResearchState) -> dict:
+    """判断用户输入是否需要检索：chat（寒暄/闲聊）→ 直接回复；knowledge → 走检索流程。"""
+    task_id = state["task_id"]
+    query = state.get("original_query") or state["query"]
+    llm = get_llm()
+    payload = await llm.extract_json(
+        ROUTER_PROMPT.format(query=query), mock_data.mock_route(query)
+    )
+    qtype = (payload.get("type") if isinstance(payload, dict) else None) or "knowledge"
+    if qtype not in ("chat", "knowledge"):
+        qtype = "knowledge"
+
+    paused_steps = ["kb_search", "paper_search", "web_search", "graph_build"]
+    if qtype == "chat":
+        # 闲聊路径：检索相关步骤标记为已暂停（DB 状态；前端由 router_result 事件同步）
+        for key, label in STEP_DEFS:
+            if key in paused_steps:
+                await _step(task_id, key, label, "paused")
+    EVENT_BUS.emit(
+        task_id, "router_result",
+        {"type": qtype, "query": query[:40], "paused_steps": paused_steps},
+    )
+    return {"query_type": qtype}
 
 
 # ---------------- 知识库检索（混合检索：bge-m3 dense+sparse 双路 RRF） ----------------
@@ -596,7 +630,20 @@ async def report_writer_node(state: ResearchState) -> dict:
         return "\n".join(lines)
 
     if not sources:
-        if lang == "en":
+        if state.get("query_type") == "chat":
+            # 闲聊路径：LLM 简短回复（Mock 模式固定回复），流式输出
+            chat_prompt = CHAT_PROMPT.format(query=original_query)
+            mock_reply = (
+                "Hello! I'm your enterprise knowledge assistant. How can I help you?"
+                if lang == "en"
+                else "你好！我是企业知识库助手，有什么可以帮您？"
+            )
+            parts: list[str] = []
+            async for piece in llm.stream_report(chat_prompt, mock_reply):
+                parts.append(piece)
+                EVENT_BUS.emit(task_id, "report_token", {"delta": piece})
+            report = "".join(parts).strip() or mock_reply
+        elif lang == "en":
             report = ("No sufficiently relevant content was found in the knowledge base "
                       "and other sources for this question. Please upload related documents "
                       "or try a different question.")

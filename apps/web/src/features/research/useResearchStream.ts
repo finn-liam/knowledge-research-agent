@@ -3,6 +3,7 @@ import { api } from "@/lib/api";
 import { useResearchStore } from "./researchStore";
 
 const EVENT_NAMES = [
+  "router_result",
   "step_started",
   "step_completed",
   "step_failed",

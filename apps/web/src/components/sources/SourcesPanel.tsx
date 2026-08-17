@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,7 +15,7 @@ const TAB_TYPE: Record<string, SourceItem["type"] | null> = {
 };
 
 /** 研究页右侧「Sources (n)」面板：Tab 筛选 + 点击展开内容 + 双向引用联动 */
-export function SourcesPanel({ sources }: { sources: SourceItem[] }) {
+function SourcesPanelInner({ sources }: { sources: SourceItem[] }) {
   const [tab, setTab] = useState("All");
   const [expandedRef, setExpandedRef] = useState<number | null>(null);
   const [viewerSource, setViewerSource] = useState<SourceItem | null>(null);
@@ -27,16 +27,17 @@ export function SourcesPanel({ sources }: { sources: SourceItem[] }) {
     return type ? sources.filter((s) => s.type === type) : sources;
   }, [sources, tab]);
 
-  // 报告 [n] 点击 → 定位高亮右侧来源
+  // 报告 [n] 点击 → 定位高亮右侧来源（仅当来源被当前 Tab 过滤掉时才切回 All，点击展开箭头不跳 Tab）
   useEffect(() => {
     if (selectedRefNo == null) return;
-    setTab("All");
+    const visible = filtered.some((s) => s.ref_no === selectedRefNo);
+    if (!visible) setTab("All");
     requestAnimationFrame(() => {
       document
         .querySelector(`[data-ref-no="${selectedRefNo}"]`)
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
     });
-  }, [selectedRefNo]);
+  }, [selectedRefNo, filtered]);
 
   const handleToggle = (refNo: number) => {
     setExpandedRef((prev) => {
@@ -109,3 +110,6 @@ export function SourcesPanel({ sources }: { sources: SourceItem[] }) {
     </Card>
   );
 }
+
+/** memo：来源列表在流式期间基本稳定，避免随 reportBuffer 变化重渲染 */
+export const SourcesPanel = memo(SourcesPanelInner);

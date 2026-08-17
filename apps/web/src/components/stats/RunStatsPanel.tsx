@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Clock3, Database, FileCheck2, Target } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatDuration, formatNumber } from "@/lib/format";
@@ -5,7 +6,7 @@ import type { RunStats } from "@/types";
 import { StatRow } from "./StatRow";
 
 /** 研究页右侧「Research Statistics」运行统计：查询时间/信息源/处理文档/相关度评分 */
-export function RunStatsPanel({ stats }: { stats: Partial<RunStats> }) {
+function RunStatsPanelInner({ stats }: { stats: Partial<RunStats> }) {
   return (
     <Card>
       <CardContent className="p-4">
@@ -20,3 +21,8 @@ export function RunStatsPanel({ stats }: { stats: Partial<RunStats> }) {
     </Card>
   );
 }
+
+
+/** memo */
+export const RunStatsPanel = memo(RunStatsPanelInner);
+

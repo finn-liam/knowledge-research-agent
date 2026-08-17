@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { GraphMiniPanel } from "@/components/graph/GraphMiniPanel";
 import { RightPanel } from "@/components/layout/RightPanel";
@@ -42,8 +42,21 @@ export function ResearchPage() {
   };
 
   const lastMsgIndex = Math.max(0, store.messages.length - 1);
-  const currentReport = store.reportBuffer || store.reports.at(-1)?.markdown || "";
+  // 当前轮报告：流式中只用本轮 buffer（空 → 骨架屏，绝不回退上一轮报告）；
+  // 仅完成后 buffer 为空（如重连快照未恢复）才回退 reports 最后一项
+  const currentReport =
+    store.phase === "streaming"
+      ? store.reportBuffer
+      : store.reportBuffer || store.reports.at(-1)?.markdown || "";
   const streaming = store.phase === "streaming";
+
+  // 流式输出期间自动滚动到底部（让用户始终看到最新生成的回答）
+  const bottomRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (streaming && store.reportBuffer) {
+      bottomRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
+    }
+  }, [store.reportBuffer, streaming]);
 
   return (
     <>
@@ -104,6 +117,8 @@ export function ResearchPage() {
                 </div>
               );
             })}
+            {/* 流式自动滚动定位锚点 */}
+            <div ref={bottomRef} />
           </div>
         </ScrollArea>
 

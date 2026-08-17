@@ -48,6 +48,30 @@ interface ResearchState {
 
 const cloneSteps = () => DEFAULT_STEPS.map((s) => ({ ...s, meta: {} }));
 
+// 流式节流：report_token 累积到 pending，100ms 批量刷入 reportBuffer（降低全树重渲染频率）
+const FLUSH_INTERVAL_MS = 100;
+let pendingTokens = "";
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleFlush(set: (partial: Partial<ResearchState>) => void, get: () => ResearchState) {
+  if (flushTimer) return;
+  flushTimer = setTimeout(() => {
+    flushTimer = null;
+    if (!pendingTokens) return;
+    const tokens = pendingTokens;
+    pendingTokens = "";
+    set({ reportBuffer: get().reportBuffer + tokens });
+  }, FLUSH_INTERVAL_MS);
+}
+
+function clearFlush() {
+  if (flushTimer) {
+    clearTimeout(flushTimer);
+    flushTimer = null;
+  }
+  pendingTokens = "";
+}
+
 export const useResearchStore = create<ResearchState>((set, get) => ({
   taskId: null,
   title: "",
@@ -89,6 +113,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   },
 
   beginRun: (taskId, query, title) => {
+    clearFlush(); // 新轮开始：清空节流累积
     const messages = [...get().messages, { role: "user" as const, content: query }];
     set({
       taskId,
@@ -112,6 +137,22 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   applyEvent: (event, data) => {
     const state = get();
     switch (event) {
+      case "router_result": {
+        // 闲聊路径：检索相关步骤标为已暂停（不跑检索）
+        if (data.type === "chat") {
+          const pausedSteps: string[] = Array.isArray(data.paused_steps)
+            ? (data.paused_steps as string[])
+            : ["kb_search", "paper_search", "web_search", "graph_build"];
+          set({
+            steps: state.steps.map((s) =>
+              pausedSteps.includes(s.step_key)
+                ? { ...s, status: "paused" as StepInfo["status"], meta: {} }
+                : s,
+            ),
+          });
+        }
+        break;
+      }
       case "step_started":
       case "step_completed":
       case "step_failed": {
@@ -153,10 +194,18 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
         break;
       }
       case "report_token": {
-        set({ reportBuffer: state.reportBuffer + String(data.delta ?? "") });
+        // 节流：累积 60ms 批量刷新，避免每 token 触发全树重渲染
+        pendingTokens += String(data.delta ?? "");
+        scheduleFlush(set, get);
         break;
       }
       case "report_completed": {
+        // 立即刷新剩余累积的 token
+        if (pendingTokens) {
+          set({ reportBuffer: state.reportBuffer + pendingTokens });
+          pendingTokens = "";
+        }
+        clearFlush();
         // 本轮报告完成：追加到历史 reports（version 递增），解锁快照
         const newReport: ReportInfo = {
           id: Number(data.report_id ?? 0),

@@ -6,6 +6,19 @@ import re
 
 FALLBACK_TOPIC = "AI Agent 技术"
 
+CHAT_KEYWORDS = [
+    "你好", "您好", "在吗", "hi", "hello", "谢谢", "再见", "你是谁",
+    "早上好", "中午好", "晚上好", "哈喽", "嗨", "辛苦", "感谢",
+]
+
+
+def mock_route(query: str) -> dict:
+    """意图判断兜底（无 Key/LLM 失败）：问候词表启发式；极短输入视为闲聊。"""
+    q = query.strip().lower()
+    if any(k in q for k in CHAT_KEYWORDS) or len(q) <= 2:
+        return {"type": "chat"}
+    return {"type": "knowledge"}
+
 
 def mock_query_process(query: str) -> dict:
     """查询增强兜底（无 Key/LLM 失败）：返回原问题，行为与现状一致。"""
