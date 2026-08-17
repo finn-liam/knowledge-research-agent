@@ -88,6 +88,27 @@
   @apply bg-muted rounded px-1.5 py-0.5 text-[13px];
 }
 
+/* 溢出防护：长表格/长代码/超长无空格串不得撑破内容容器（否则 scrollIntoView 会连带横移页面） */
+.report-body table {
+  @apply my-3 block w-full overflow-x-auto;
+}
+.report-body pre {
+  @apply my-3 overflow-x-auto rounded-lg;
+}
+.report-body pre code {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.report-body img {
+  max-width: 100%;
+}
+.report-body p,
+.report-body li,
+.report-body td,
+.report-body th {
+  overflow-wrap: anywhere;
+}
+
 /* Slim scrollbars */
 ::-webkit-scrollbar {
   width: 6px;

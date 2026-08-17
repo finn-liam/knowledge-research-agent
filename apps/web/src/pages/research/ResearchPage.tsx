@@ -54,7 +54,8 @@ export function ResearchPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (streaming && store.reportBuffer) {
-      bottomRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
+      bottomRef.current?.scrollIntoView({ behavior: "auto", block: "end", inline: "nearest" });
+      if (window.scrollX !== 0) window.scrollTo({ left: 0 });
     }
   }, [store.reportBuffer, streaming]);
 

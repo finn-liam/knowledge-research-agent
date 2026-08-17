@@ -35,7 +35,7 @@ function SourcesPanelInner({ sources }: { sources: SourceItem[] }) {
     requestAnimationFrame(() => {
       document
         .querySelector(`[data-ref-no="${selectedRefNo}"]`)
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        ?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
     });
   }, [selectedRefNo, filtered]);
 
@@ -47,7 +47,7 @@ function SourcesPanelInner({ sources }: { sources: SourceItem[] }) {
         requestAnimationFrame(() => {
           document
             .querySelector(`[data-ref-no="${refNo}"]`)
-            ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            ?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
         });
       }
       return next;

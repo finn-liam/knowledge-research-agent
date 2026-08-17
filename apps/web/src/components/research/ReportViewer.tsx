@@ -64,7 +64,7 @@ export function ReportViewer({ markdown, streaming }: { markdown: string; stream
     requestAnimationFrame(() => {
       document
         .querySelector(`[data-report-ref="${selectedRefNo}"]`)
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        ?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
     });
   }, [selectedRefNo]);
 
