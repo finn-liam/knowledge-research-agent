@@ -10,11 +10,11 @@ export function ResearchStatsPanel({ summary }: { summary: AnalyticsSummary | un
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="flex items-center gap-1.5 text-sm font-semibold">
-          Research Statistics
+        <div className="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
+          <span className="truncate">Research Statistics</span>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="cursor-help">
+              <span className="shrink-0 cursor-help">
                 <Info className="h-3.5 w-3.5 text-muted-foreground/70" />
               </span>
             </TooltipTrigger>
