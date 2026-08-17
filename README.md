@@ -1,79 +1,99 @@
 # Knowledge Research Agent
 
-企业级 **Agentic RAG** 知识研究助手：输入一个问题，系统自动完成
-**多源检索 → 质量判断与反思重查 → 带引用溯源的研究报告生成**，
-全过程通过 SSE 流式实时展示。
+<div align="center">
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
+[![Python 3.11](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
+[![React 18](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-1.x-orange.svg)](https://www.langchain.com/langgraph)
+[![Qdrant](https://img.shields.io/badge/Qdrant-1.18-ff3f59.svg)](https://qdrant.tech/)
+
+**An enterprise-grade Agentic RAG assistant** — ask one question and the system autonomously performs multi-source retrieval, quality judgment and reflective re-search, then produces a citation-traced research report.
+
+[中文文档](README.zh-CN.md)
+
+</div>
+
+---
+
+## 📐 Architecture
+
+![Architecture](docs/Diagram.png)
 
 ```
-提问 → 查询增强(LLM改写+关键词扩展)
-     → 三路并行检索（企业知识库 ∥ arXiv 论文 ∥ Tavily 网页）
-     → 融合 + RRF 排名 + reranker 精排
-     → Retrieval Grader 打分判断 ── 低分 → 改写重查(≤2次)
-     → DeepSeek 流式生成（强制 [n] 引用）→ Verifier 核查
-     → 带引用溯源报告（点击定位原文页码/片段全文）
+User Question → Query Router (chat | knowledge)
+    → Parallel Retrieval (Knowledge Base ∥ arXiv Papers ∥ Tavily Web)
+    → Merge + RRF + bge-reranker
+    → Retrieval Grader ── low quality → Rewrite & Re-search (≤2 rounds)
+    → LLM Generation (DeepSeek streaming, forced [n] citations)
+    → Answer Verification → Citation-Traced Report
 ```
 
-## ✨ 核心特性
+## ✨ Key Features
 
-| 能力 | 说明 |
+| Capability | Description |
 |---|---|
-| **Agentic RAG（Self-RAG）** | LangGraph 低层 StateGraph 手写 7 节点：并行检索 + Grader 判断 + 改写重查循环 |
-| **混合检索** | bge-m3 一次前向产出 dense(1024)+sparse 双表示 → 双路召回 + RRF(k=60) + bge-reranker 精排 |
-| **查询增强** | LLM 改写 + 关键词扩展；dense/sparse 双路分离应用；增强无命中自动回退原问题 |
-| **多源检索** | 企业知识库（Qdrant）+ arXiv 论文 + Tavily 网页 三路并行 |
-| **PDF 智能解析** | 类型分流（原生/扫描/图文混排）→ 版面还原（阅读顺序/页眉页脚/标题/页码）→ RapidOCR 图片识别 + VLM 图表描述（OpenAI 兼容协议，默认 mimo-v2.5） |
-| **Parent-Child 切片** | child（650 token）精准检索 + parent（章节级 2000 token）完整上下文 |
-| **引用溯源** | 每条论断强制 [n] 标注、页码定位、片段全文核对（/kb/chunk 端点） |
-| **多轮对话** | 追问重跑流水线，报告多版本保留 |
-| **流式交互** | SSE 事件驱动：步骤状态/来源增量/grader 打分/报告 token 实时推送，断线重连 + 完成自动校准 |
-| **评估体系** | RAGAS 四指标 + Golden Dataset + 双口径 + 参数对比工具，before/after 量化优化 |
-| **Mock 降级** | 无 API Key 也能完整演示（LLM 摘录兜底、模拟来源），逐级降级链路永不中断 |
+| **Agentic RAG (Self-RAG)** | 7-node LangGraph StateGraph: parallel retrieval + grader judgment + rewrite/re-search loop |
+| **Hybrid Retrieval** | bge-m3 dense (1024-dim) + sparse lexical weights in one forward pass → dual-path recall + RRF(k=60) + bge-reranker |
+| **Query Enhancement** | LLM rewrite + keyword expansion with dual-path encoding (dense=concise rewrite, sparse=rewrite+keywords); auto fallback to the original query |
+| **Multi-source Retrieval** | Enterprise knowledge base (Qdrant) ∥ arXiv papers ∥ Tavily web search |
+| **Intelligent PDF Parsing** | Page-level routing (native / scanned OCR / mixed) → layout restoration (reading order, header/footer removal, headings, page markers) → RapidOCR + VLM chart description (OpenAI-compatible, e.g. mimo-v2.5) |
+| **Parent-Child Chunking** | child (650 tokens) for precise retrieval + parent (chapter-level, 2000 tokens) for complete context |
+| **Citation Tracing** | Every claim forced to carry [n] citations; page-number locating and full-text verification via `/kb/chunk` |
+| **Multi-round Dialogue** | Follow-up questions re-run the pipeline; report versioning preserved |
+| **Streaming UX** | SSE-driven: step status, incremental sources, grader scores and report tokens in real time; auto-reconnect + completion calibration |
+| **Evaluation Suite** | RAGAS metrics + 40-item Golden Dataset + dual-scope scoring + parameter A/B comparison tool |
+| **Graceful Degradation** | Runs without any API key (Mock mode); tiered fallbacks keep the pipeline alive |
 
-## 📐 技术栈
+## 🖼 Screenshots
 
-- **后端**：Python 3.11 · FastAPI · LangGraph · LangChain(langchain-openai) · SQLAlchemy(异步) · SQLite（可切 PostgreSQL）
-- **检索**：Qdrant（dense+sparse 双向量）· bge-m3 · bge-reranker-v2-m3 · tiktoken
-- **PDF**：PyMuPDF · pypdf · RapidOCR · VLM（OpenAI 兼容，默认 mimo-v2.5）
-- **LLM**：DeepSeek（默认 `deepseek-v4-flash`，OpenAI 兼容可换）
-- **前端**：React 18 · TypeScript · Vite · TailwindCSS · shadcn/ui · Zustand · TanStack Query · React Flow
-- **评估**：RAGAS
+<div align="center">
+  <img src="docs/screenshots/1-home.png" width="45%" alt="Home page" />
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/2-research.png" width="45%" alt="Research in progress" />
+  <br /><br />
+  <img src="docs/screenshots/3-citation.png" width="45%" alt="Citation tracing" />
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/4-kb.png" width="45%" alt="Knowledge base" />
+</div>
 
-## 🚀 快速开始
+*Home · Agent workflow in progress · Citation-to-source tracing · Knowledge base ingestion*
 
-### 环境要求
+## 🚀 Quick Start
 
-- Python 3.11（conda 环境，后端依赖见 `requirements.txt`）
-- Node.js 18+（前端）
-- Docker（可选：向量库 Qdrant；生产部署）
+### Prerequisites
 
-### 1. 启动向量库
+- Python 3.11
+- Node.js 18+
+- Docker (optional — Qdrant vector database; a running Qdrant also works via `QDRANT_URL`)
+
+### 1. Start Qdrant
 
 ```bash
-# 仅启动 Qdrant（也可用已有 Qdrant，改 .env 的 QDRANT_URL）
 docker compose -f infra/docker-compose.yml up -d qdrant
 ```
 
-### 2. 下载本地模型（约 4.4GB，存储于项目 models/ 目录）
+### 2. Download local models (~4.4GB, stored in the project `models/`)
 
 ```bash
 cd apps/api
-python scripts/download_models.py   # bge-m3 + bge-reranker-v2-m3（经 hf-mirror）
+python scripts/download_models.py   # bge-m3 + bge-reranker-v2-m3 (via hf-mirror)
 ```
 
-### 3. 配置（复制模板并填写）
+### 3. Configure
 
 ```bash
 cp apps/api/.env.example apps/api/.env
 ```
 
 ```ini
-DEEPSEEK_API_KEY=        # LLM（留空则报告用真实片段摘录兜底）
-TAVILY_API_KEY=          # 网页搜索（留空走模拟网页来源）
-VLM_API_KEY=             # 图表描述（留空则跳过 VLM 描述）
-# 以上三个 Key 全部留空也能完整演示（Mock 模式）
+DEEPSEEK_API_KEY=        # LLM (leave empty → excerpt fallback, Mock mode)
+TAVILY_API_KEY=          # Web search (leave empty → simulated web sources)
+VLM_API_KEY=             # Chart description (leave empty → skip VLM)
+# All three can be empty — the full demo still works (Mock mode).
 ```
 
-### 4. 启动后端
+### 4. Start the backend
 
 ```bash
 cd apps/api
@@ -81,7 +101,7 @@ python -m pip install -r requirements.txt
 python -m uvicorn app.main:app --port 8000
 ```
 
-### 5. 启动前端
+### 5. Start the frontend
 
 ```bash
 cd apps/web
@@ -89,97 +109,97 @@ npm install
 npm run dev
 ```
 
-打开 **http://localhost:5173/**，在首页提问即可。
+Open **http://localhost:5173/** and ask a question.
 
-### 6. （可选）上传企业文档
+### 6. (Optional) Upload enterprise documents
 
-左侧 **Knowledge Base** 页上传 PDF/DOCX/MD/TXT（≤100MB/个，默认值可调），
-系统自动完成解析 → 切片 → 向量化，随后提问即可检索这些文档。
+Use the **Knowledge Base** page to upload PDF/DOCX/MD/TXT files (≤100MB each, configurable). They are parsed, chunked and vectorized automatically.
 
-## 📊 评估体系
+## 📊 Statistics & Data Scope
+
+The numbers on the home page are **live aggregations of real data** (not display samples):
+
+| Panel | Scope |
+|---|---|
+| **Sources** | Source fragments actually retrieved across all historical research, grouped by type (enterprise documents / academic papers / web pages); grows after every research |
+| **Research Statistics** | Cumulative metrics: Total Research = research count; Knowledge Sources = total retrieved sources; Documents Hit = cumulative documents matched; Accuracy Rate = historical average relevance |
+
+## 📈 Evaluation
 
 ```bash
 cd apps/api
 python -m pip install -r requirements-eval.txt
 
-# 1. 生成评估数据集（从知识库切片生成 QA，默认 40 条）
+# 1. Generate the evaluation dataset from knowledge-base chunks (40 items by default)
 python eval/scripts/eval_dataset_gen.py 40
 
-# 2. 运行评估（检索层全量 + 生成层真实链路抽样 10 条）
+# 2. Run evaluation (retrieval layer on all items + generation layer via the real API on 10 sampled items)
 python eval/scripts/eval_run.py --gen 10 --save-baseline
 
-# 3. 查看报告 eval/report.md（指标汇总 + 基线对比 + 低分样例）
-# 4. 调参前后对比：python eval/scripts/param_compare.py
+# 3. Read the report at eval/report.md (metric summary + baseline diff + low-score cases)
+# 4. A/B test retrieval parameters: python eval/scripts/param_compare.py
 ```
 
-**基线示例**（40 条数据集）：faithfulness 0.855 · 检索 precision 0.748 · KB 口径 0.772 · recall 0.501（多标注口径）。
+**Baseline example** (40-item dataset): faithfulness 0.855 · retrieval precision 0.748 · KB-scope precision 0.772 · recall 0.501 (multi-annotation scope).
 
-## 📊 数据统计口径说明
-
-首页右侧面板的数字均为**真实数据的实时统计**（非展示样例）：
-
-| 面板 | 口径 |
-|---|---|
-| **Sources** | 历史所有研究**真实检索到**的来源片段，按类型聚合计数（企业内部文档 / 学术论文 / 网页资源）；每次研究完成后自动增长 |
-| **Research Statistics** | 累计指标：Total Research=历史研究总次数；Knowledge Sources=累计检索来源总数；Documents Hit=累计命中文档总数；Accuracy Rate=历史平均相关度 |
-
-## 🗂 目录结构
+## 🗂 Project Structure
 
 ```
 ├── apps/
-│   ├── api/                    # FastAPI 后端
+│   ├── api/                    # FastAPI backend
 │   │   ├── app/
-│   │   │   ├── agents/         # LangGraph：graph/nodes/state/prompts/events + mock
-│   │   │   ├── rag/            # chunker/parsers/models(embedding)/vector_store/ocr/vlm
+│   │   │   ├── agents/         # LangGraph: graph / nodes / state / prompts / events + mock
+│   │   │   ├── rag/            # chunker / parsers / models (embedding) / vector_store / ocr / vlm
 │   │   │   ├── integrations/   # arXiv / Tavily
-│   │   │   ├── llm/            # LLM 网关（DeepSeek + Mock）
-│   │   │   ├── services/       # 任务生命周期 / 摄入管线
-│   │   │   ├── api/v1/         # REST + SSE 路由
-│   │   │   └── models/         # 9 张 ORM 表
-│   │   ├── scripts/            # 模型下载 / 测试 / 修复工具
+│   │   │   ├── llm/            # LLM gateway (DeepSeek + Mock)
+│   │   │   ├── services/       # task lifecycle / ingestion pipeline
+│   │   │   ├── api/v1/         # REST + SSE routes
+│   │   │   └── models/         # 9 ORM tables
+│   │   ├── scripts/            # model download / tests / utilities
 │   │   └── requirements*.txt
-│   └── web/                    # React 前端
+│   └── web/                    # React frontend
 │       └── src/
-│           ├── components/     # ui(原子)/layout/research/sources/graph/stats/kb
+│           ├── components/     # ui / layout / research / sources / graph / stats / kb
 │           ├── features/       # researchStore + SSE hook + userStore
 │           └── pages/          # home / research / knowledge-base / library
-├── eval/                       # 评估体系（数据集/脚本/报告/基线）
-├── infra/                      # docker-compose（PG/Qdrant/Redis/MinIO + api/web）
-├── docs/                       # 架构/简历/面试文档
-└── design/                     # 参考效果图
+├── eval/                       # evaluation suite (dataset / scripts / report / baseline)
+├── infra/                      # docker-compose (PG/Qdrant/Redis/MinIO + api/web)
+├── docs/                       # architecture / screenshots / resume & interview notes
+└── sample-data/                # sample documents for demo
 ```
 
-## 🔌 API 一览
+## 🔌 API Overview
 
-| 方法 | 路径 | 说明 |
+| Method | Path | Description |
 |---|---|---|
-| POST | `/api/v1/research` | 创建研究任务 |
-| GET | `/api/v1/research/{id}/stream` | SSE 事件流（步骤/来源/grader/报告 token） |
-| GET | `/api/v1/research/{id}` | 任务详情（报告多版本/来源/统计） |
-| POST | `/api/v1/research/{id}/followup` | 追问 |
-| POST/GET/DELETE | `/api/v1/documents` | 知识库文档管理 |
-| GET | `/api/v1/kb/chunk` | 片段全文溯源 |
-| GET | `/api/v1/kb/stats` `/api/v1/sources/stats` | 统计 |
-| GET | `/docs` | FastAPI 自带 API 文档 |
+| POST | `/api/v1/research` | Create a research task |
+| GET | `/api/v1/research/{id}/stream` | SSE event stream (steps / sources / grader / report tokens) |
+| GET | `/api/v1/research/{id}` | Task detail (multi-version reports / sources / stats) |
+| POST | `/api/v1/research/{id}/followup` | Follow-up question |
+| POST/GET/DELETE | `/api/v1/documents` | Knowledge-base document management |
+| GET | `/api/v1/kb/chunk` | Full chunk text for citation tracing |
+| GET | `/api/v1/kb/stats` · `/api/v1/sources/stats` | Statistics |
+| GET | `/docs` | Auto-generated API docs |
 
-## 🐳 部署
+## 🐳 Deployment
 
-- **单机 Docker**：`infra/docker-compose.yml`（PG/Qdrant/Redis/MinIO + api + web），模型以卷挂载
-- 生产化路径与服务器方案见 `docs/deployment.md`（规划中）
+- **Single-node Docker**: `infra/docker-compose.yml` (PostgreSQL/Qdrant/Redis/MinIO + api + web), models mounted as a volume
+- Production hardening (PostgreSQL / Redis Pub-Sub / Celery) and multi-node plans are documented in the project roadmap
 
 ## 📄 License
 
-- 代码：**MIT**（见 LICENSE）
-- 模型：bge-m3 / bge-reranker-v2-m3（MIT，BAAI）；RapidOCR 模型随包（Apache 2.0）
-- 第三方服务：DeepSeek / Tavily / mimo 需自备 API Key
+- Code: **MIT** (see LICENSE)
+- Models: bge-m3 / bge-reranker-v2-m3 (MIT, BAAI); RapidOCR models (Apache 2.0)
+- Third-party services: DeepSeek / Tavily / mimo require your own API keys
 
 ## 🗺 Roadmap
 
-- [x] Agentic RAG 核心链路（多源 + Self-RAG + 引用溯源）
-- [x] PDF 智能解析（OCR + VLM 图表描述）
-- [x] RAGAS 评估体系 + 稳定基线
-- [ ] DOCX 图片提取（复用 OCR/VLM 管线）
-- [ ] 表格结构化（Docling/PP-Structure 评估）
-- [ ] 企业能力：认证（JWT/SSO）、RBAC、审计
-- [ ] 生产化：PostgreSQL / Redis Pub-Sub / Celery
-- [ ] CI/CD（pytest 整合 + GitHub Actions）
+- [x] Agentic RAG core (multi-source + Self-RAG + citation tracing)
+- [x] Intelligent PDF parsing (OCR + VLM chart description)
+- [x] RAGAS evaluation suite + stable baseline
+- [ ] Query Router with per-source routing (kb / kb+web / kb+paper / full)
+- [ ] DOCX image extraction (reuse OCR/VLM pipeline)
+- [ ] Table structuring (Docling / PP-Structure evaluation)
+- [ ] Enterprise capabilities: auth (JWT/SSO), RBAC, audit logs
+- [ ] Production hardening: PostgreSQL / Redis Pub-Sub / Celery
+- [ ] CI/CD (pytest + GitHub Actions)
