@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 const ACCEPT = ".pdf,.docx,.md,.txt";
 
-/** 上传区：拖拽 + 点击选择（PDF/DOCX/MD/TXT，≤20MB×5） */
+/** 上传区：拖拽 + 点击选择（PDF/DOCX/MD/TXT，≤100MB×5） */
 export function UploadZone({
   uploading,
   onUpload,
@@ -56,7 +56,7 @@ export function UploadZone({
         {uploading ? "正在上传并解析..." : "点击或拖拽上传文档"}
       </div>
       <div className="mt-1 text-xs text-muted-foreground">
-        支持 PDF / DOCX / MD / TXT · 单文件 ≤20MB · 单批 ≤5 个
+        支持 PDF / DOCX / MD / TXT · 单文件 ≤100MB · 单批 ≤5 个
       </div>
       {uploading && (
         <Button variant="outline" size="sm" className="mt-3" disabled>

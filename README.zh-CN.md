@@ -3,9 +3,9 @@
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
-[![CI](https://github.com/feiyangchen1910/knowledge-research-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/feiyangchen1910/knowledge-research-agent/actions/workflows/ci.yml)
+[![CI](https://github.com/finn-liam/knowledge-research-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/finn-liam/knowledge-research-agent/actions/workflows/ci.yml)
 [![Python 3.11](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
-[![React 18](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev/)
+[![React 19](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-1.x-orange.svg)](https://www.langchain.com/langgraph)
 [![Qdrant](https://img.shields.io/badge/Qdrant-1.18-ff3f59.svg)](https://qdrant.tech/)
 
@@ -157,7 +157,7 @@ python eval/scripts/eval_run.py --gen 10 --save-baseline
 │   │   │   ├── llm/            # LLM 网关（DeepSeek + Mock）
 │   │   │   ├── services/       # 任务生命周期 / 摄入管线
 │   │   │   ├── api/v1/         # REST + SSE 路由
-│   │   │   └── models/         # 9 张 ORM 表
+│   │   │   └── models/         # 8 张 ORM 表
 │   │   ├── scripts/            # 模型下载 / 测试 / 修复工具
 │   │   └── requirements*.txt
 │   └── web/                    # React 前端
@@ -167,7 +167,7 @@ python eval/scripts/eval_run.py --gen 10 --save-baseline
 │           └── pages/          # home / research / knowledge-base / library
 ├── eval/                       # 评估体系（数据集/脚本/报告/基线）
 ├── infra/                      # docker-compose（PG/Qdrant/Redis/MinIO + api/web）
-├── docs/                       # 架构/截图/简历与面试文档
+├── docs/                       # 架构图/效果截图
 └── sample-data/                # 演示用示例文档
 ```
 

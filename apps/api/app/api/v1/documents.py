@@ -2,6 +2,7 @@
 from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile
 from sqlalchemy import delete, func, select
 
+from app.core.config import get_settings
 from app.core.timeutil import fmt_dt
 from app.db.session import SessionLocal
 from app.models.research import Document, DocumentChunk
@@ -23,6 +24,7 @@ from app.services.ingestion_service import (
 documents_router = APIRouter(prefix="/documents", tags=["documents"])
 kb_router = APIRouter(prefix="/kb", tags=["kb"])
 
+settings = get_settings()
 MAX_FILES_PER_BATCH = 5
 
 
@@ -38,7 +40,7 @@ async def upload_documents(
         for f in files:
             content = await f.read()
             if len(content) > MAX_FILE_BYTES:
-                raise HTTPException(status_code=422, detail=f"{f.filename} 超过 20MB 限制")
+                raise HTTPException(status_code=422, detail=f"{f.filename} 超过 {settings.max_upload_mb}MB 限制")
             try:
                 doc_type, relative = save_upload(f.filename or "unnamed", content)
             except ValueError as exc:

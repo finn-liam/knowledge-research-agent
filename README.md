@@ -3,9 +3,9 @@
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
-[![CI](https://github.com/feiyangchen1910/knowledge-research-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/feiyangchen1910/knowledge-research-agent/actions/workflows/ci.yml)
+[![CI](https://github.com/finn-liam/knowledge-research-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/finn-liam/knowledge-research-agent/actions/workflows/ci.yml)
 [![Python 3.11](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
-[![React 18](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev/)
+[![React 19](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-1.x-orange.svg)](https://www.langchain.com/langgraph)
 [![Qdrant](https://img.shields.io/badge/Qdrant-1.18-ff3f59.svg)](https://qdrant.tech/)
 
@@ -157,7 +157,7 @@ python eval/scripts/eval_run.py --gen 10 --save-baseline
 │   │   │   ├── llm/            # LLM gateway (DeepSeek + Mock)
 │   │   │   ├── services/       # task lifecycle / ingestion pipeline
 │   │   │   ├── api/v1/         # REST + SSE routes
-│   │   │   └── models/         # 9 ORM tables
+│   │   │   └── models/         # 8 ORM tables
 │   │   ├── scripts/            # model download / tests / utilities
 │   │   └── requirements*.txt
 │   └── web/                    # React frontend
@@ -167,7 +167,7 @@ python eval/scripts/eval_run.py --gen 10 --save-baseline
 │           └── pages/          # home / research / knowledge-base / library
 ├── eval/                       # evaluation suite (dataset / scripts / report / baseline)
 ├── infra/                      # docker-compose (PG/Qdrant/Redis/MinIO + api/web)
-├── docs/                       # architecture / screenshots / resume & interview notes
+├── docs/                       # architecture diagram / screenshots
 └── sample-data/                # sample documents for demo
 ```
 
