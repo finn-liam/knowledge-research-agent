@@ -45,7 +45,7 @@ export function SourceItemCard({
       <div className="flex items-start gap-2.5">
         <SourceTypeIcon type={source.type} />
         <div className="min-w-0 flex-1">
-          <div className="line-clamp-2 text-[13px] font-medium leading-snug text-foreground/90">
+          <div className="line-clamp-2 break-words text-[13px] font-medium leading-snug text-foreground/90">
             {source.ref_no > 0 && (
               <span className="mr-1 font-semibold text-primary">[{source.ref_no}]</span>
             )}
@@ -55,11 +55,11 @@ export function SourceItemCard({
             <Badge variant="muted" className="max-w-[160px] truncate px-1.5 text-[11px] font-normal">
               {source.source_label || source.type}
             </Badge>
-            <span className="shrink-0 text-[11px] text-muted-foreground">
+            <span className="max-w-[120px] truncate text-[11px] text-muted-foreground">
               · 相关度 {formatRelevance(source.relevance)}
             </span>
             {source.page_nos && source.page_nos.length > 0 && (
-              <span className="shrink-0 text-[11px] text-muted-foreground">
+              <span className="max-w-[140px] truncate text-[11px] text-muted-foreground">
                 · 第{source.page_nos.join("、")}页
               </span>
             )}
