@@ -114,6 +114,11 @@
   width: 6px;
   height: 6px;
 }
+
+/* 滚动区宽度稳定：滚动条出现/消失不改变内容区宽度（来源卡片宽度恒定） */
+[data-radix-scroll-area-viewport] {
+  scrollbar-gutter: stable;
+}
 ::-webkit-scrollbar-thumb {
   @apply bg-border rounded-full;
 }
