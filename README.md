@@ -11,6 +11,8 @@
 
 **An enterprise-grade Agentic RAG assistant** — ask one question and the system autonomously performs multi-source retrieval, quality judgment and reflective re-search, then produces a citation-traced research report.
 
+**企业级 Agentic RAG 知识研究助手** — 输入一个问题，自动完成多源检索、质量判断与反思重查，生成带引用溯源的研究报告（混合检索 · Self-RAG · RAGAS 评估）。
+
 [中文文档](README.zh-CN.md)
 
 </div>
