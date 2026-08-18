@@ -1,0 +1,24 @@
+{
+  "retrieval_layer": {
+    "context_precision": 0.7480009920339625,
+    "context_recall": 0.5013864008462036
+  },
+  "generation_layer": {
+    "faithfulness": 0.8552543290043291,
+    "context_precision": 0.5933182018473203,
+    "context_recall": 0.49946237972553764
+  },
+  "faithfulness_by_type": {
+    "chart": 0.8,
+    "text": 0.7789752140974967
+  },
+  "generation_layer_kb": {
+    "context_precision": 0.7719642856906221,
+    "context_recall": 0.5063084748069269
+  },
+  "meta": {
+    "dataset_size": 40,
+    "gen_sample": 10,
+    "ts": "2026-08-07 12:48"
+  }
+}

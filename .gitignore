@@ -21,9 +21,10 @@ apps/api/kra.db
 .env
 !.env.example
 
-# 运行时数据
+# 运行时数据（评估基线作为基准入库，其余结果忽略）
 versions-backup.txt
-eval/results/
+eval/results/*
+!eval/results/baseline.json
 apps/api/app/uploads/*
 !apps/api/app/uploads/.gitkeep
 
