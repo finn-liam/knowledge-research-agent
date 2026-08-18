@@ -38,7 +38,7 @@ export function AppSidebar() {
   });
 
   return (
-    <aside className="flex w-[232px] shrink-0 flex-col border-r bg-secondary/40">
+    <aside className="flex w-[232px] min-w-0 shrink-0 flex-col border-r bg-secondary/40">
       <div className="p-3">
         <Button
           variant="outline"
