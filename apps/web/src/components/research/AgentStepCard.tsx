@@ -8,6 +8,7 @@ import {
   Loader2,
   Network,
   PauseCircle,
+  SkipForward,
   XCircle,
   type LucideIcon,
 } from "lucide-react";
@@ -77,6 +78,12 @@ export function AgentStepCard({ step }: { step: StepInfo }) {
           <>
             <PauseCircle className="h-3.5 w-3.5 text-muted-foreground/50" />
             <span className="text-muted-foreground/70">已暂停</span>
+          </>
+        )}
+        {step.status === "skipped" && (
+          <>
+            <SkipForward className="h-3.5 w-3.5 text-sky-500/70" />
+            <span className="text-sky-600/80">已跳过</span>
           </>
         )}
       </div>

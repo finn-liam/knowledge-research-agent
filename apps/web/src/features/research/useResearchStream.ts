@@ -7,6 +7,7 @@ const EVENT_NAMES = [
   "step_started",
   "step_completed",
   "step_failed",
+  "step_skipped",
   "source_found",
   "sources_final",
   "kb_status",

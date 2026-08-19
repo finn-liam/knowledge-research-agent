@@ -155,10 +155,17 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       }
       case "step_started":
       case "step_completed":
-      case "step_failed": {
+      case "step_failed":
+      case "step_skipped": {
         const key = data.step as string;
         const status =
-          event === "step_started" ? "running" : event === "step_completed" ? "done" : "failed";
+          event === "step_started"
+            ? "running"
+            : event === "step_completed"
+              ? "done"
+              : event === "step_skipped"
+                ? "skipped"
+                : "failed";
         const steps = state.steps.map((s) =>
           s.step_key === key ? { ...s, status: status as StepInfo["status"], meta: data } : s,
         );

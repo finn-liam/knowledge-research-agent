@@ -1,6 +1,6 @@
 /** 与后端 API 对齐的 TypeScript 契约 */
 
-export type StepStatus = "pending" | "running" | "done" | "failed" | "paused";
+export type StepStatus = "pending" | "running" | "done" | "failed" | "paused" | "skipped";
 export type TaskStatus = "running" | "done" | "failed";
 export type SourceType = "enterprise" | "paper" | "web" | "news" | "patent" | "report";
 

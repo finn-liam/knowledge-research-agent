@@ -58,7 +58,7 @@ async def _step(task_id: str, step_key: str, label: str, status: str, meta: dict
                 row.status = status
                 if status == "running":
                     row.started_at = _now()
-                if status in ("done", "failed"):
+                if status in ("done", "failed", "skipped"):
                     row.finished_at = _now()
                 row.meta_json = {**(row.meta_json or {}), **meta}
                 await db.commit()
@@ -68,6 +68,8 @@ async def _step(task_id: str, step_key: str, label: str, status: str, meta: dict
         EVENT_BUS.emit(task_id, "step_completed", {"step": step_key, "label": label, **meta})
     elif status == "failed":
         EVENT_BUS.emit(task_id, "step_failed", {"step": step_key, "label": label, **meta})
+    elif status == "skipped":
+        EVENT_BUS.emit(task_id, "step_skipped", {"step": step_key, "label": label})
 
 
 def _emit_sources(task_id: str, sources: list[dict]) -> None:
@@ -89,7 +91,7 @@ def _emit_sources(task_id: str, sources: list[dict]) -> None:
 # ---------------- 意图路由（chat / knowledge） ----------------
 
 async def fanout_node(state: ResearchState) -> dict:
-    """扇出占位节点：knowledge 路径经由它并行分发到三路检索。"""
+    """扇出占位节点：KB 无命中时经由它并行分发到论文/网页两路检索。"""
     return {}
 
 
@@ -356,13 +358,19 @@ async def kb_retriever_node(state: ResearchState) -> dict:
     else:
         EVENT_BUS.emit(task_id, "kb_status", {"status": kb_status})
 
+    kb_hit = bool(results)
+    if kb_hit:
+        # 渐进式检索：KB 已命中 → 跳过论文/网页（省下游精排/打分/上下文成本）
+        await _step(task_id, "paper_search", "检索学术论文", "skipped")
+        await _step(task_id, "web_search", "搜索网页信息", "skipped")
+
     await _step(
         task_id, "kb_search", "查询企业知识库", "done",
         {"hits": len(results), "kb_status": kb_status,
          "enhanced": enhanced,
          "duration_ms": int((time.time() - started) * 1000)},
     )
-    return {
+    out: dict = {
         "topic": topic,
         "kb_results": results,
         "metrics": {
@@ -370,6 +378,11 @@ async def kb_retriever_node(state: ResearchState) -> dict:
             "kb_docs": unique_docs,  # 命中的唯一文档数（真实计数）
         },
     }
+    if kb_hit:
+        # 清空外部源旧结果（改写重查命中 KB 时，不让上一轮论文/网页残留参与融合）
+        out["paper_results"] = []
+        out["web_results"] = []
+    return out
 
 
 # ---------------- 学术论文检索（arXiv） ----------------
