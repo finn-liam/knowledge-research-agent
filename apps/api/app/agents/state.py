@@ -13,6 +13,7 @@ class ResearchState(TypedDict, total=False):
     query: str                       # 当前活动查询（重检索改写后可能变化）
     original_query: str              # 用户原始问题（报告始终回答它）
     query_type: str                  # 意图路由结果：chat / knowledge
+    search_mode: str                 # 检索范围：kb_only（渐进式）/ multi（三路全开）
     topic: str                       # 从查询中提炼的研究主题
     lang: str                        # 报告语言偏好 zh / en
     mode: str

@@ -96,7 +96,12 @@ async def fanout_node(state: ResearchState) -> dict:
 
 
 async def router_node(state: ResearchState) -> dict:
-    """判断用户输入是否需要检索：chat（寒暄/闲聊）→ 直接回复；knowledge → 走检索流程。"""
+    """判断用户输入是否需要检索：chat（寒暄/闲聊）→ 直接回复；knowledge → 走检索流程。
+
+    同时输出检索范围 search_mode：
+      kb_only —— 仅企业知识库（渐进式：命中即跳过外部源）
+      multi   —— 三路全开（用户点名网页/论文/对比/最新进展等外部信息需求）
+    """
     task_id = state["task_id"]
     query = state.get("original_query") or state["query"]
     llm = get_llm()
@@ -106,18 +111,22 @@ async def router_node(state: ResearchState) -> dict:
     qtype = (payload.get("type") if isinstance(payload, dict) else None) or "knowledge"
     if qtype not in ("chat", "knowledge"):
         qtype = "knowledge"
+    smode = (payload.get("sources") if isinstance(payload, dict) else None) or "kb_only"
+    if smode not in ("kb_only", "multi"):
+        smode = "kb_only"
 
     paused_steps = ["kb_search", "paper_search", "web_search", "graph_build"]
     if qtype == "chat":
         # 闲聊路径：检索相关步骤标记为已暂停（DB 状态；前端由 router_result 事件同步）
+        smode = "kb_only"
         for key, label in STEP_DEFS:
             if key in paused_steps:
                 await _step(task_id, key, label, "paused")
     EVENT_BUS.emit(
         task_id, "router_result",
-        {"type": qtype, "query": query[:40], "paused_steps": paused_steps},
+        {"type": qtype, "query": query[:40], "paused_steps": paused_steps, "sources": smode},
     )
-    return {"query_type": qtype}
+    return {"query_type": qtype, "search_mode": smode}
 
 
 # ---------------- 知识库检索（混合检索：bge-m3 dense+sparse 双路 RRF） ----------------
@@ -359,8 +368,8 @@ async def kb_retriever_node(state: ResearchState) -> dict:
         EVENT_BUS.emit(task_id, "kb_status", {"status": kb_status})
 
     kb_hit = bool(results)
-    if kb_hit:
-        # 渐进式检索：KB 已命中 → 跳过论文/网页（省下游精排/打分/上下文成本）
+    if kb_hit and state.get("search_mode", "kb_only") == "kb_only":
+        # 渐进式检索：KB 已命中且用户未要求外部源 → 跳过论文/网页（省下游精排/打分/上下文成本）
         await _step(task_id, "paper_search", "检索学术论文", "skipped")
         await _step(task_id, "web_search", "搜索网页信息", "skipped")
 
@@ -378,7 +387,7 @@ async def kb_retriever_node(state: ResearchState) -> dict:
             "kb_docs": unique_docs,  # 命中的唯一文档数（真实计数）
         },
     }
-    if kb_hit:
+    if kb_hit and state.get("search_mode", "kb_only") == "kb_only":
         # 清空外部源旧结果（改写重查命中 KB 时，不让上一轮论文/网页残留参与融合）
         out["paper_results"] = []
         out["web_results"] = []
