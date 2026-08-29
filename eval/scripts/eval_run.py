@@ -287,21 +287,30 @@ def _fmt_score(v: float, raw) -> str:
 async def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--gen", type=int, default=8, help="生成层抽样条数（0=仅跑检索层）")
+    parser.add_argument("--limit", type=int, default=0, help="只取数据集前 N 条试跑（0=全量；用于低成本验证）")
     parser.add_argument("--save-baseline", action="store_true", help="首次运行存档基线")
     args = parser.parse_args()
 
     items = load_dataset()
+    if args.limit > 0:
+        items = items[: args.limit]
     child_map, parent_map = await chunk_text_map()
     settings = get_settings()
     print(f"[eval] 数据集 {len(items)} 条 | 生成层抽样 {min(args.gen, len(items))} 条", flush=True)
 
-    # ---- LLM 适配器（DeepSeek → ragas）----
+    # ---- LLM 适配器（ragas 裁判，与被测系统解耦）----
+    # 默认用 DeepSeek 主配置；设置 EVAL_JUDGE_MODEL/BASE_URL/API_KEY 可指向
+    # 任意 OpenAI 兼容端点（如 Ollama: http://localhost:11434/v1 + qwen2.5:7b，Key 随意填）。
     from langchain_openai import ChatOpenAI
     from ragas.llms import LangchainLLMWrapper
 
+    judge_model = settings.eval_judge_model or settings.deepseek_model
+    judge_base = settings.eval_judge_base_url or settings.deepseek_base_url
+    judge_key = settings.eval_judge_api_key or settings.deepseek_api_key
+    print(f"[eval] ragas 裁判模型: {judge_model} @ {judge_base}", flush=True)
     chat = ChatOpenAI(
-        model=settings.deepseek_model, api_key=settings.deepseek_api_key,
-        base_url=settings.deepseek_base_url, temperature=0.1,
+        model=judge_model, api_key=judge_key,
+        base_url=judge_base, temperature=0.1,
     )
     ragas_llm = LangchainLLMWrapper(chat)
 

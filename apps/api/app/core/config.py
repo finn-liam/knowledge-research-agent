@@ -70,6 +70,12 @@ class Settings(BaseSettings):
     api_port: int = 8000
     cors_origins: str = "http://localhost:5173"
 
+    # 评估裁判 LLM（仅 eval_run.py 的 ragas 评分使用，与被测系统解耦）。
+    # 留空回退 DeepSeek 主配置；可指向任意 OpenAI 兼容端点（如 Ollama 本地模型）省钱。
+    eval_judge_model: str = ""
+    eval_judge_base_url: str = ""
+    eval_judge_api_key: str = ""
+
     @property
     def models_dir(self) -> Path:
         return (BASE_DIR / self.hf_home).resolve()
