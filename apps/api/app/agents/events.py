@@ -3,17 +3,22 @@
 每个 task_id 对应一个事件缓冲（用于断线重连快照）+ 一个订阅队列。
 """
 import asyncio
+from collections import deque
 from typing import Any
+
+# 缓冲上限：超限从头部丢弃（重连重放只依赖最近事件，报告全文由前端拉 REST 快照兜底）。
+# 不设上限时，每个任务的全部事件（含 report_token）会永久驻留内存。
+EVENT_BUFFER_MAX = 600
 
 
 class EventBus:
     def __init__(self) -> None:
-        self._buffers: dict[str, list[dict[str, Any]]] = {}
+        self._buffers: dict[str, deque[dict[str, Any]]] = {}
         self._queues: dict[str, asyncio.Queue] = {}
 
     def open(self, task_id: str) -> None:
         # 复用同一队列对象（不替换），避免订阅者拿到被覆盖的旧队列
-        self._buffers[task_id] = []
+        self._buffers[task_id] = deque(maxlen=EVENT_BUFFER_MAX)
         self._queues.setdefault(task_id, asyncio.Queue())
 
     def emit(self, task_id: str, event: str, data: dict[str, Any]) -> None:
@@ -25,16 +30,18 @@ class EventBus:
             queue.put_nowait(payload)
 
     def history(self, task_id: str) -> list[dict[str, Any]]:
-        return list(self._buffers.get(task_id, []))
+        buffer = self._buffers.get(task_id)
+        return list(buffer) if buffer else []
 
     def subscribe(self, task_id: str) -> asyncio.Queue:
         if task_id not in self._queues:
             self._queues[task_id] = asyncio.Queue()
+            self._buffers.setdefault(task_id, deque(maxlen=EVENT_BUFFER_MAX))
         return self._queues[task_id]
 
     def reset(self, task_id: str) -> None:
         """追问重跑前：清空缓冲，并排空队列残留（保留同一队列对象）。"""
-        self._buffers[task_id] = []
+        self._buffers[task_id] = deque(maxlen=EVENT_BUFFER_MAX)
         queue = self._queues.setdefault(task_id, asyncio.Queue())
         while not queue.empty():
             try:

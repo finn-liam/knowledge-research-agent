@@ -11,6 +11,15 @@ from app.agents.graph import get_research_graph
 from app.db.session import SessionLocal
 from app.models.research import STEP_DEFS, Message, ResearchStep, ResearchTask, Source
 
+# 后台任务强引用：asyncio.create_task 的返回值若无引用，事件循环可能在任务完成前将其 GC
+_BACKGROUND_TASKS: set[asyncio.Task] = set()
+
+
+def _spawn(coro) -> None:
+    task = asyncio.create_task(coro)
+    _BACKGROUND_TASKS.add(task)
+    task.add_done_callback(_BACKGROUND_TASKS.discard)
+
 
 async def create_task(query: str, lang: str = "zh") -> str:
     topic = mock_data.extract_topic(query)
@@ -61,15 +70,20 @@ async def _run(task_id: str, query: str, lang: str = "zh") -> None:
 
 
 def launch(task_id: str, query: str, lang: str = "zh") -> None:
-    asyncio.create_task(_run(task_id, query, lang))
+    _spawn(_run(task_id, query, lang))
 
 
-async def followup(task_id: str, query: str, lang: str = "zh") -> bool:
-    """追问：追加用户消息，重置步骤/来源，按新问题重跑流水线。"""
+async def followup(task_id: str, query: str, lang: str = "zh") -> str:
+    """追问：追加用户消息，重置步骤/来源，按新问题重跑流水线。
+
+    返回 "ok" | "not_found" | "running"（running 时拒绝，避免同一任务双流水线并发写）。
+    """
     async with SessionLocal() as db:
         task = await db.get(ResearchTask, task_id)
         if task is None:
-            return False
+            return "not_found"
+        if task.status == "running":
+            return "running"
         task.status = "running"
         task.query = query
         db.add(Message(task_id=task_id, role="user", content=query))
@@ -85,5 +99,5 @@ async def followup(task_id: str, query: str, lang: str = "zh") -> bool:
         await db.execute(delete(Source).where(Source.task_id == task_id))
         await db.commit()
     EVENT_BUS.reset(task_id)
-    asyncio.create_task(_run(task_id, query, lang))
-    return True
+    _spawn(_run(task_id, query, lang))
+    return "ok"

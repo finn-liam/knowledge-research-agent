@@ -28,8 +28,12 @@ def _sse(payload: dict) -> str:
 
 @router.post("", response_model=CreateResearchResponse)
 async def create_research(body: CreateResearchRequest):
-    task_id = await research_service.create_task(body.query.strip(), body.lang)
-    research_service.launch(task_id, body.query.strip(), body.lang)
+    query = body.query.strip()
+    # pydantic min_length 校验在 strip 之前，纯空格串会绕过；strip 后复检
+    if len(query) < 2:
+        raise HTTPException(status_code=422, detail="query 过短")
+    task_id = await research_service.create_task(query, body.lang)
+    research_service.launch(task_id, query, body.lang)
     async with SessionLocal() as db:
         task = await db.get(ResearchTask, task_id)
         title = task.title if task else ""
@@ -121,6 +125,11 @@ async def get_research(task_id: str):
 
 @router.get("/{task_id}/stream")
 async def stream_research(task_id: str):
+    # 不存在的任务直接 404：否则订阅一个永远不会产出事件的队列，连接只能靠 ping 悬挂
+    async with SessionLocal() as db:
+        if await db.get(ResearchTask, task_id) is None:
+            raise HTTPException(status_code=404, detail="task not found")
+
     async def event_gen():
         queue = EVENT_BUS.subscribe(task_id)
         # 重连重放：过滤 report_token（报告全文由前端 onopen 时拉取详情，避免重复/拼接错乱）
@@ -151,9 +160,15 @@ async def stream_research(task_id: str):
 
 @router.post("/{task_id}/followup")
 async def followup_research(task_id: str, body: FollowupRequest):
-    ok = await research_service.followup(task_id, body.query.strip(), body.lang)
-    if not ok:
+    query = body.query.strip()
+    if len(query) < 2:
+        raise HTTPException(status_code=422, detail="query 过短")
+    result = await research_service.followup(task_id, query, body.lang)
+    if result == "not_found":
         raise HTTPException(status_code=404, detail="task not found")
+    if result == "running":
+        # 任务仍在流水线中：拒绝并发重跑（否则步骤/来源被双写、SSE 事件交错）
+        raise HTTPException(status_code=409, detail="task is still running")
     return {"ok": True}
 
 

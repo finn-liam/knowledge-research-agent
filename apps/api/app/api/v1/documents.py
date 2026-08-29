@@ -38,6 +38,9 @@ async def upload_documents(
     items = []
     async with SessionLocal() as db:
         for f in files:
+            # 先按 multipart 声明大小预检：超限文件直接拒绝，避免整读进内存后才校验
+            if f.size is not None and f.size > MAX_FILE_BYTES:
+                raise HTTPException(status_code=422, detail=f"{f.filename} 超过 {settings.max_upload_mb}MB 限制")
             content = await f.read()
             if len(content) > MAX_FILE_BYTES:
                 raise HTTPException(status_code=422, detail=f"{f.filename} 超过 {settings.max_upload_mb}MB 限制")
