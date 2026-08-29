@@ -162,7 +162,7 @@ python eval/scripts/eval_run.py --gen 10 --save-baseline
 │   │   │   └── models/         # 8 ORM tables
 │   │   ├── scripts/            # model download / tests / utilities
 │   │   └── requirements*.txt
-│   └── web/                    # React frontend
+│   └── web/                    # Next.js frontend (App Router + TypeScript)
 │       └── src/
 │           ├── components/     # ui / layout / research / sources / graph / stats / kb
 │           ├── features/       # researchStore + SSE hook + userStore

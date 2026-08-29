@@ -160,7 +160,7 @@ python eval/scripts/eval_run.py --gen 10 --save-baseline
 │   │   │   └── models/         # 8 张 ORM 表
 │   │   ├── scripts/            # 模型下载 / 测试 / 修复工具
 │   │   └── requirements*.txt
-│   └── web/                    # React 前端
+│   └── web/                    # Next.js 前端（App Router）
 │       └── src/
 │           ├── components/     # ui(原子)/layout/research/sources/graph/stats/kb
 │           ├── features/       # researchStore + SSE hook + userStore
