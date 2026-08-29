@@ -1,9 +1,13 @@
+"use client";
+
 import { ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useMounted } from "@/hooks/use-mounted";
 import { useUserStore, userInitials } from "@/features/user/userStore";
 
 /** 顶栏：Logo + 产品名 + 用户头像（与用户卡片联动） */
 export function TopNav() {
+  const mounted = useMounted();
   const username = useUserStore((s) => s.username);
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b bg-card px-4">
@@ -17,7 +21,7 @@ export function TopNav() {
         </button>
       </div>
       <Avatar className="h-8 w-8">
-        <AvatarFallback>{userInitials(username)}</AvatarFallback>
+        <AvatarFallback>{userInitials(mounted ? username : "")}</AvatarFallback>
       </Avatar>
     </header>
   );

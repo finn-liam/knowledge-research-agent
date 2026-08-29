@@ -1,5 +1,7 @@
+"use client";
+
 import { useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams } from "next/navigation";
 import { GraphMiniPanel } from "@/components/graph/GraphMiniPanel";
 import { RightPanel } from "@/components/layout/RightPanel";
 import { AgentHeader } from "@/components/research/AgentHeader";
@@ -19,7 +21,7 @@ import { useUserStore } from "@/features/user/userStore";
 import { api } from "@/lib/api";
 
 /** 研究报告页：多轮对话流 + 当前轮步骤卡 + 流式报告 + 右侧面板（对齐效果图2） */
-export function ResearchPage() {
+export default function ResearchPage() {
   const { taskId } = useParams<{ taskId: string }>();
   const store = useResearchStore();
 
@@ -37,8 +39,13 @@ export function ResearchPage() {
   const followup = async (query: string) => {
     if (!taskId) return;
     const lang = useUserStore.getState().reportLang;
-    await api.followup(taskId, query, lang);
-    useResearchStore.getState().beginRun(taskId, query, useResearchStore.getState().title);
+    try {
+      await api.followup(taskId, query, lang);
+      useResearchStore.getState().beginRun(taskId, query, useResearchStore.getState().title);
+    } catch (e) {
+      // 追问提交失败（含任务仍在运行中的 409）时给出反馈
+      window.alert(`追问提交失败，请稍后重试。\n${e instanceof Error ? e.message : e}`);
+    }
   };
 
   const lastMsgIndex = Math.max(0, store.messages.length - 1);

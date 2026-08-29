@@ -1,3 +1,5 @@
+"use client";
+
 import { Check, Languages, ListOrdered, Moon, Sun } from "lucide-react";
 import {
   Dialog,

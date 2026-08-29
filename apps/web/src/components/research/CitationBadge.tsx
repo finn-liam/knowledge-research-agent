@@ -1,3 +1,5 @@
+"use client";
+
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useResearchStore } from "@/features/research/researchStore";
 import { cn } from "@/lib/utils";

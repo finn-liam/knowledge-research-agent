@@ -1,3 +1,5 @@
+"use client";
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Clock3, FileWarning, Layers, Loader2, XCircle } from "lucide-react";
 import { useState } from "react";
@@ -9,12 +11,14 @@ import { api } from "@/lib/api";
 import type { KbDocument } from "@/types";
 
 /** Knowledge Base：企业知识库管理（上传→解析→切片→向量化→检索） */
-export function KnowledgeBasePage() {
+export default function KnowledgeBasePage() {
   const queryClient = useQueryClient();
   const [previewDoc, setPreviewDoc] = useState<KbDocument | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  const { data: docs, isLoading } = useQuery({
+  // isPending（而非 isLoading）：SSR 阶段 enabled=false 时 isFetching 恒为 false，
+  // isLoading 会在服务端/客户端产生不同分支导致水合不一致
+  const { data: docs, isPending: docsPending } = useQuery({
     queryKey: ["kb-documents"],
     queryFn: api.listDocuments,
     // 有处理中任务时高频轮询状态
@@ -92,7 +96,7 @@ export function KnowledgeBasePage() {
 
         {/* 文档表格 */}
         <div className="mt-5">
-          {isLoading ? (
+          {docsPending ? (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> 加载文档列表...
             </div>

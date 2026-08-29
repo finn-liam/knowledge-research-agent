@@ -1,5 +1,7 @@
+"use client";
+
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,8 +15,8 @@ const STATUS_LABEL: Record<string, { text: string; variant: "default" | "seconda
 };
 
 /** Library：历史研究报告列表 */
-export function LibraryPage() {
-  const navigate = useNavigate();
+export default function LibraryPage() {
+  const router = useRouter();
   const { data: tasks } = useQuery({
     queryKey: ["library"],
     queryFn: () => api.listResearch(50),
@@ -33,7 +35,7 @@ export function LibraryPage() {
               <Card
                 key={t.id}
                 className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-md"
-                onClick={() => navigate(`/research/${t.id}`)}
+                onClick={() => router.push(`/research/${t.id}`)}
               >
                 <CardContent className="flex items-center justify-between p-4">
                   <div className="min-w-0">

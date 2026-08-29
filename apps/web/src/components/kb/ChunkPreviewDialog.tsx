@@ -9,6 +9,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { api } from "@/lib/api";
 import type { KbDocument } from "@/types";
 
+const STATUS_TEXT: Record<string, string> = {
+  pending: "等待中",
+  parsing: "解析中",
+  embedding: "向量化中",
+  indexed: "已索引",
+  failed: "失败",
+};
+
 /** 切片预览对话框：展示文档切分结果，验证切片质量 */
 export function ChunkPreviewDialog({
   doc,
@@ -27,7 +35,7 @@ export function ChunkPreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent aria-describedby={undefined} className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="truncate pr-6">{doc?.name}</DialogTitle>
         </DialogHeader>
@@ -46,7 +54,9 @@ export function ChunkPreviewDialog({
             ))}
             {data && data.chunks.length === 0 && (
               <div className="py-8 text-center text-sm text-muted-foreground">
-                {data.status === "indexed" ? "暂无切片" : `文档正在${data.status}中，完成后可见切片`}
+                {data.status === "indexed"
+                  ? "暂无切片"
+                  : `文档正在${STATUS_TEXT[data.status] ?? data.status}中，完成后可见切片`}
               </div>
             )}
           </div>

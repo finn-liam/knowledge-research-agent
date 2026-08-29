@@ -1,3 +1,5 @@
+"use client";
+
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3,
@@ -9,7 +11,8 @@ import {
   Plus,
   Settings,
 } from "lucide-react";
-import { NavLink, useNavigate } from "react-router-dom";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { UserProfileCard } from "@/components/user/UserProfileCard";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -29,7 +32,8 @@ const NAV_ITEMS = [
 
 /** 左侧边栏：New Research / 主导航 / Recent Research / Enterprise Plan */
 export function AppSidebar() {
-  const navigate = useNavigate();
+  const router = useRouter();
+  const pathname = usePathname();
   const recentLimit = useUserStore((s) => s.recentLimit);
   const { data: recent } = useQuery({
     queryKey: ["recent-research", recentLimit],
@@ -43,7 +47,7 @@ export function AppSidebar() {
         <Button
           variant="outline"
           className="w-full justify-start gap-2 bg-card font-medium"
-          onClick={() => navigate("/")}
+          onClick={() => router.push("/")}
         >
           <Plus className="h-4 w-4" />
           New Research
@@ -51,24 +55,24 @@ export function AppSidebar() {
       </div>
 
       <nav className="space-y-0.5 px-3">
-        {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === "/"}
-            className={({ isActive }) =>
-              cn(
+        {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
+          const isActive = to === "/" ? pathname === "/" : pathname.startsWith(to);
+          return (
+            <Link
+              key={to}
+              href={to}
+              className={cn(
                 "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 isActive
                   ? "bg-accent text-accent-foreground"
                   : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-              )
-            }
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </NavLink>
-        ))}
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </Link>
+          );
+        })}
       </nav>
 
       <div className="mt-5 px-4 text-xs font-medium text-muted-foreground">Recent Research</div>
@@ -78,7 +82,7 @@ export function AppSidebar() {
             {recent.map((t) => (
               <button
                 key={t.id}
-                onClick={() => navigate(`/research/${t.id}`)}
+                onClick={() => router.push(`/research/${t.id}`)}
                 className="w-full rounded-lg px-3 py-2 text-left transition-colors hover:bg-accent/50"
               >
                 <div className="truncate text-[13px] font-medium text-foreground/90">

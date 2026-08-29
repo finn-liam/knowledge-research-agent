@@ -1,3 +1,5 @@
+"use client";
+
 import { memo, useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,6 +29,7 @@ function SourcesPanelInner({ sources }: { sources: SourceItem[] }) {
   }, [sources, tab]);
 
   // 报告 [n] 点击 → 定位高亮右侧来源（仅当来源被当前 Tab 过滤掉时才切回 All，点击展开箭头不跳 Tab）
+  // 依赖 tab 而非 filtered：流式期间新来源到达会生成新数组，若依赖 filtered 会反复把用户拉回选中项
   useEffect(() => {
     if (selectedRefNo == null) return;
     const visible = filtered.some((s) => s.ref_no === selectedRefNo);
@@ -36,7 +39,8 @@ function SourcesPanelInner({ sources }: { sources: SourceItem[] }) {
         .querySelector(`[data-ref-no="${selectedRefNo}"]`)
         ?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
     });
-  }, [selectedRefNo, filtered]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- filtered 由 selectedRefNo/tab 派生，仅在其变化时滚动
+  }, [selectedRefNo, tab]);
 
   const handleToggle = (refNo: number) => {
     setExpandedRef((prev) => {

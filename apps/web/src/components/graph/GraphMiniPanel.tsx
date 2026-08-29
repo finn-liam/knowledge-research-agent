@@ -1,8 +1,15 @@
+"use client";
+
+import dynamic from "next/dynamic";
 import { memo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { GraphData } from "@/types";
-import { GraphCanvas } from "./GraphCanvas";
 import { GraphEmptyState } from "./GraphEmptyState";
+
+// reactflow 依赖浏览器测量，禁用 SSR 按需加载
+const GraphCanvas = dynamic(() => import("./GraphCanvas").then((m) => m.GraphCanvas), {
+  ssr: false,
+});
 
 /** 右侧「Knowledge Graph」面板：空态插画 / 有数据时渲染迷你图谱（首页、研究页复用） */
 function GraphMiniPanelInner({ graph, hint }: { graph: GraphData; hint?: string }) {

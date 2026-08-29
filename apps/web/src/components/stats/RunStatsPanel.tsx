@@ -1,3 +1,5 @@
+"use client";
+
 import { memo } from "react";
 import { Clock3, Database, FileCheck2, Target } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";

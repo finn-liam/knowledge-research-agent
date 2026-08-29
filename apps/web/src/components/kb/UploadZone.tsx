@@ -1,3 +1,5 @@
+"use client";
+
 import { CloudUpload, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";

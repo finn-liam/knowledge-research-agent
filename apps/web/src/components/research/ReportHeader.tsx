@@ -1,3 +1,5 @@
+"use client";
+
 import { memo } from "react";
 import { Download, MoreHorizontal, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";

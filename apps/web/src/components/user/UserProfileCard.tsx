@@ -1,6 +1,8 @@
+"use client";
+
 import { ChevronUp, Info, LogOut, Palette, Settings, UserRound } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -9,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useMounted } from "@/hooks/use-mounted";
 import { useUserStore, userInitials } from "@/features/user/userStore";
 import { AboutDialog } from "./AboutDialog";
 import { PersonalizeDialog } from "./PersonalizeDialog";
@@ -16,8 +19,10 @@ import { ProfileDialog } from "./ProfileDialog";
 
 /** 侧栏底部用户卡片：点击弹出菜单（个人资料/个性化/设置/关于/退出登录） */
 export function UserProfileCard() {
-  const navigate = useNavigate();
-  const username = useUserStore((s) => s.username);
+  const router = useRouter();
+  const mounted = useMounted();
+  const persistedName = useUserStore((s) => s.username);
+  const username = mounted ? persistedName : "YC";
   const resetPrefs = useUserStore((s) => s.resetPrefs);
   const [profileOpen, setProfileOpen] = useState(false);
   const [personalizeOpen, setPersonalizeOpen] = useState(false);
@@ -47,7 +52,7 @@ export function UserProfileCard() {
             <Palette />
             个性化
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate("/settings")}>
+          <DropdownMenuItem onClick={() => router.push("/settings")}>
             <Settings />
             设置
           </DropdownMenuItem>
@@ -59,7 +64,7 @@ export function UserProfileCard() {
           <DropdownMenuItem
             onClick={() => {
               resetPrefs();
-              navigate("/");
+              router.push("/");
             }}
           >
             <LogOut />

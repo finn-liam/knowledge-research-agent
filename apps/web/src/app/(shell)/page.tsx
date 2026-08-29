@@ -1,6 +1,8 @@
+"use client";
+
 import { useQuery } from "@tanstack/react-query";
 import { Sparkles } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { GraphMiniPanel } from "@/components/graph/GraphMiniPanel";
 import { RightPanel } from "@/components/layout/RightPanel";
 import { ExampleCards } from "@/components/research/ExampleCards";
@@ -12,8 +14,8 @@ import { useUserStore } from "@/features/user/userStore";
 import { api } from "@/lib/api";
 
 /** 首页：欢迎区 + 研究输入框 + 示例卡片 + 右侧三面板（对齐效果图1） */
-export function HomePage() {
-  const navigate = useNavigate();
+export default function HomePage() {
+  const router = useRouter();
   const reportLang = useUserStore((s) => s.reportLang);
 
   const { data: sourceStats } = useQuery({
@@ -26,8 +28,13 @@ export function HomePage() {
   });
 
   const startResearch = async (query: string) => {
-    const { task_id } = await api.createResearch(query, reportLang);
-    navigate(`/research/${task_id}`);
+    try {
+      const { task_id } = await api.createResearch(query, reportLang);
+      router.push(`/research/${task_id}`);
+    } catch (e) {
+      // 创建失败（后端不可达/校验拒绝）时给出反馈，避免"点了没反应"
+      window.alert(`研究任务创建失败，请稍后重试。\n${e instanceof Error ? e.message : e}`);
+    }
   };
 
   return (

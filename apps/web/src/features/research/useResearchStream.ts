@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect } from "react";
 import { api } from "@/lib/api";
 import { useResearchStore } from "./researchStore";

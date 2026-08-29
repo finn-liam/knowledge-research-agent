@@ -1,3 +1,5 @@
+"use client";
+
 import { Plus, SendHorizontal } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
