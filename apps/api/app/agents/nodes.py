@@ -32,6 +32,8 @@ from app.llm.gateway import get_llm
 from app.models.research import STEP_DEFS, Citation, Report, ResearchStep, ResearchTask, Source
 
 MAX_KB_SOURCES = 8
+# 已废弃的单文档配额（A/B 实测精排前配额损害召回，见 eval/results/ab_recall.json）；
+# 保留常量仅为兼容外部引用，检索路径不再使用
 MAX_CHUNKS_PER_DOC = 3
 MAX_GRADE_SOURCES = 12  # merger 输出给 grader 评估的候选上限
 _step_lock = asyncio.Lock()
@@ -272,14 +274,56 @@ async def _hybrid_search(store, dense_text: str, sparse_text: str | None, top_k:
     return fused
 
 
+async def _multi_query_search(
+    store, query_pairs: list[tuple[str, str | None]], top_k: int = 20
+) -> list[dict]:
+    """多查询检索：每路各自 hybrid 检索，再跨查询 RRF 合并（等权、按 chunk id 去重）。
+
+    动机：单条查询的 dense 向量存在语义盲区（诊断显示 37.5% 标注 chunk 不在 dense top-50），
+    换措辞的多路查询能覆盖不同语义角度；显示分 relevance 取各路中的最高 dense 分。
+    """
+    from app.rag.vector_store import RRF_K
+
+    result_lists: list[list[dict]] = []
+    for dense_text, sparse_text in query_pairs:
+        if not dense_text:
+            continue
+        res = await _hybrid_search(store, dense_text, sparse_text, top_k=top_k)
+        if res:
+            result_lists.append(res)
+
+    if not result_lists:
+        return []
+    if len(result_lists) == 1:
+        return result_lists[0]
+
+    rrf_scores: dict[int, float] = {}
+    best: dict[int, dict] = {}
+    for lst in result_lists:
+        for rank, h in enumerate(lst, start=1):
+            rrf_scores[h["id"]] = rrf_scores.get(h["id"], 0.0) + 1.0 / (RRF_K + rank)
+            cur = best.get(h["id"])
+            if cur is None or (h.get("relevance") or 0.0) > (cur.get("relevance") or 0.0):
+                best[h["id"]] = h
+
+    merged = []
+    for cid, score in rrf_scores.items():
+        h = dict(best[cid])
+        h["rrf_multi"] = round(score, 6)
+        merged.append(h)
+    merged.sort(key=lambda x: x["rrf_multi"], reverse=True)
+    return merged
+
+
 async def kb_retriever_node(state: ResearchState) -> dict:
     task_id, query = state["task_id"], state["query"]
     topic = mock_data.extract_topic(query)
     started = time.time()
     await _step(task_id, "kb_search", "查询企业知识库", "running")
 
-    # 查询增强：LLM 改写 + 关键词扩展（一次调用；Mock/失败 → 原问题）
+    # 查询增强：LLM 改写 + 关键词扩展 + 多查询变体（一次调用；Mock/失败 → 原问题）
     dense_query, sparse_query = query, query
+    sub_queries: list[str] = []
     enhanced = False
     if settings.query_processing:
         llm = get_llm()
@@ -289,6 +333,12 @@ async def kb_retriever_node(state: ResearchState) -> dict:
         )
         dense_query, sparse_query = _build_enhanced_queries(processed, query)
         enhanced = dense_query != query or sparse_query != query
+        if settings.multi_query:
+            sub_queries = [
+                s.strip()
+                for s in (processed.get("sub_queries") or [])
+                if isinstance(s, str) and s.strip() and s.strip() != query
+            ][:2]
 
     results: list[dict] = []
     kb_status = "empty"  # empty / no_hits / unreachable / ok
@@ -298,20 +348,22 @@ async def kb_retriever_node(state: ResearchState) -> dict:
     try:
         await store.ensure_collection()
         if await store.count() > 0:
-            fused = await _hybrid_search(store, dense_query, sparse_query if enhanced else None)
-            if not fused and enhanced:
+            query_pairs: list[tuple[str, str | None]] = [
+                (dense_query, sparse_query if enhanced else None)
+            ]
+            query_pairs += [(s, None) for s in sub_queries]
+            fused = await _multi_query_search(store, query_pairs)
+            if not fused and (enhanced or sub_queries):
                 # 增强未命中 → 回退原问题直接检索（兜底不劣化）
                 fused = await _hybrid_search(store, query, None)
             if not fused:
                 kb_status = "no_hits"
             else:
                 kb_status = "ok"
-                per_doc: dict[int, int] = {}
+                # 注：不做单文档配额——A/B 实测配额在精排前挤掉同文档的标注相关片段
+                # （multi_cap_rerank 0.410 vs multi_rerank 0.497）；多样性由 merger 统一精排+标题去重保证
                 for h in fused:
                     doc_id = h["document_id"]
-                    if per_doc.get(doc_id, 0) >= MAX_CHUNKS_PER_DOC:
-                        continue
-                    per_doc[doc_id] = per_doc.get(doc_id, 0) + 1
                     results.append(
                         {
                             "title": f"{h['document_name']} · 片段 {h['chunk_index'] + 1}",

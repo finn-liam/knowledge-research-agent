@@ -30,8 +30,8 @@ def mock_route(query: str) -> dict:
 
 
 def mock_query_process(query: str) -> dict:
-    """查询增强兜底（无 Key/LLM 失败）：返回原问题，行为与现状一致。"""
-    return {"rewritten_query": query, "keywords": []}
+    """查询增强兜底（无 Key/LLM 失败）：返回原问题，行为与现状一致（不产生多查询）。"""
+    return {"rewritten_query": query, "keywords": [], "sub_queries": []}
 
 _STRIP_TOKENS = [
     "请", "帮我", "帮忙", "分析", "研究", "评估", "探索", "解读", "一下",

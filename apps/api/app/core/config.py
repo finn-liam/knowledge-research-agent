@@ -60,6 +60,8 @@ class Settings(BaseSettings):
     hybrid_search: bool = True
     # 查询增强：提问前 LLM 改写+关键词扩展（false 回退原问题直接检索）
     query_processing: bool = True
+    # 多查询检索：改写时生成 sub_queries 变体，多路语义检索后跨查询 RRF 合并（false 仅主查询）
+    multi_query: bool = True
     # 重排：RRF 融合后 bge-reranker-v2-m3 模型精排（false 仅 RRF 排名）
     rerank_enabled: bool = True
 
