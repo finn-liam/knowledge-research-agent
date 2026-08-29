@@ -69,7 +69,11 @@ services:
 
   web:
     build: ../apps/web
-    ports: ["80:80"]
+    # Next.js standalone server（容器内监听 3000，对外映射 80）
+    ports: ["80:3000"]
+    environment:
+      # 浏览器请求 /api/* 由 Next 服务端转发到 api 容器
+      API_PROXY_TARGET: http://api:8000
     depends_on: [api]
 
 volumes:
