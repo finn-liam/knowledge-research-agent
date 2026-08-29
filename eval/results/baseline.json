@@ -1,24 +1,27 @@
 {
   "retrieval_layer": {
-    "context_precision": 0.7480009920339625,
-    "context_recall": 0.5013864008462036
+    "context_precision": 0.747147485738751,
+    "context_recall": 0.48463083938870544
   },
-  "generation_layer": {
-    "faithfulness": 0.8552543290043291,
-    "context_precision": 0.5933182018473203,
-    "context_recall": 0.49946237972553764
+  "retrieval_layer_parent": {
+    "context_precision": 0.7470502623727944,
+    "context_recall": 0.5759201593640887
   },
+  "retrieval_id_level": {
+    "precision_production": 0.1200757575757576,
+    "recall_production": 0.5200000000000002,
+    "precision_raw": 0.11900000000000002,
+    "recall_raw": 0.5066666666666667
+  },
+  "generation_layer": {},
   "faithfulness_by_type": {
-    "chart": 0.8,
-    "text": 0.7789752140974967
+    "chart": null,
+    "text": null
   },
-  "generation_layer_kb": {
-    "context_precision": 0.7719642856906221,
-    "context_recall": 0.5063084748069269
-  },
+  "generation_layer_kb": {},
   "meta": {
-    "dataset_size": 40,
-    "gen_sample": 10,
-    "ts": "2026-08-07 12:48"
+    "dataset_size": 100,
+    "gen_sample": 0,
+    "ts": "2026-08-29 22:48"
   }
 }

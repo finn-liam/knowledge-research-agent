@@ -145,7 +145,7 @@ python eval/scripts/eval_run.py --gen 10 --save-baseline
 # 4. A/B test retrieval parameters: python eval/scripts/param_compare.py
 ```
 
-**Baseline example** (40-item dataset): faithfulness 0.855 · retrieval precision 0.748 · KB-scope precision 0.772 · recall 0.501 (multi-annotation scope).
+**Baseline example** (100-item dataset, retrieval aligned to the production path): context precision 0.747 · recall 0.485 (child scope) / 0.576 (parent scope); ID-level top-12 recall 0.520 vs 0.507 raw single-query.
 
 ## 🗂 Project Structure
 

@@ -143,7 +143,7 @@ python eval/scripts/eval_run.py --gen 10 --save-baseline
 # 4. 调参前后对比：python eval/scripts/param_compare.py
 ```
 
-**基线示例**（40 条数据集）：faithfulness 0.855 · 检索 precision 0.748 · KB 口径 0.772 · recall 0.501（多标注口径）。
+**基线示例**（100 条数据集，检索层对齐生产路径）：context precision 0.747 · recall 0.485（child 口径）/ 0.576（parent 口径）；ID 级 top-12 recall 0.520（原始单路 0.507）。
 
 ## 🗂 目录结构
 
