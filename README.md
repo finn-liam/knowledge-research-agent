@@ -147,6 +147,24 @@ python eval/scripts/eval_run.py --gen 10 --save-baseline
 
 **Baseline example** (100-item dataset, retrieval aligned to the production path): context precision 0.747 · recall 0.485 (child scope) / 0.576 (parent scope); ID-level top-12 recall 0.520 vs 0.507 raw single-query.
 
+### Retrieval Ablation (why the pipeline looks like this)
+
+Every component below is justified by a measured experiment on the 100-item dataset (ID-level: a hit = retrieved chunk ∈ labeled `relevant_chunks`; see `eval/scripts/ab_recall.py` / `diagnose_recall.py`, zero LLM cost):
+
+| Variant (top-8) | Precision | Recall | Takeaway |
+|---|---|---|---|
+| raw single-query | 0.166 | 0.478 | baseline |
+| raw + rerank | 0.171 | **0.497** | reranker: **+0.019** — keep |
+| rewritten-query-as-main only | 0.135 | 0.398 | LLM rewrite alone: **−0.080** — harmful |
+| rewrite + sub-queries (no rerank) | 0.160 | 0.467 | multi-query recovers the loss |
+| + per-doc cap of 3 | 0.154 | 0.410 | quota before rerank: **−0.087** — removed |
+| rewrite + sub-queries + rerank (prod) | 0.171 | **0.497** | current production combo |
+
+Two structural findings drove the design:
+
+- **37.5% of labeled chunks never appear in dense top-50** (pure embedding blind spots, e.g. code-detail questions) — this is why query variants exist at all, and why recall work continues (HyDE next).
+- The eval retrieval layer runs **the exact production path** (enhancement → multi-query → rerank, window = `MAX_GRADE_SOURCES`), so numbers reflect what users get, not a simplified proxy.
+
 ## 🗂 Project Structure
 
 ```
