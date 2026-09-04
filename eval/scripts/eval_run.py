@@ -80,7 +80,8 @@ async def production_kb_candidates(store, question: str, llm) -> list[dict]:
             if isinstance(s, str) and s.strip() and s.strip() != question
         ][:2]
 
-    pairs = [(dense_q, sparse_q if dense_q != question else None)]
+    # 主查询用原话（与生产 kb_retriever_node 一致，见 ab_recall orig_multi 结论）
+    pairs = [(question, None)]
     pairs += [(s, None) for s in sub_qs]
     fused = await _multi_query_search(store, pairs, top_k=EVAL_TOP_K)
     if not fused and (dense_q != question or sub_qs):

@@ -157,8 +157,19 @@ Every component below is justified by a measured experiment on the 100-item data
 | raw + rerank | 0.171 | **0.497** | reranker: **+0.019** — keep |
 | rewritten-query-as-main only | 0.135 | 0.398 | LLM rewrite alone: **−0.080** — harmful |
 | rewrite + sub-queries (no rerank) | 0.160 | 0.467 | multi-query recovers the loss |
+| **original-as-main + sub-queries + rerank** | **0.171** | **0.497** (K12: **0.523** vs 0.520) | adopted — main query keeps the user's words |
 | + per-doc cap of 3 | 0.154 | 0.410 | quota before rerank: **−0.087** — removed |
-| rewrite + sub-queries + rerank (prod) | 0.171 | **0.497** | current production combo |
+| rewrite + sub-queries + rerank (prev prod) | 0.171 | **0.497** | previous combo, superseded |
+
+**BM25 vs learned-sparse hybrid** (`bm25_compare.py`, jieba-tokenized BM25 on the same corpus, ID-level):
+
+| Method | Precision@8 | Recall@8 | Recall@12 |
+|---|---|---|---|
+| BM25 | 0.138 | 0.405 | 0.422 |
+| BM25 + rerank | 0.138 | 0.405 | 0.422 |
+| **bge-m3 hybrid + rerank (prod)** | **0.171** | **0.493** | **0.523** |
+
+On this Chinese corpus, the learned sparse path of bge-m3 beats classic BM25 by **+0.09~0.10 recall** at both windows — which is why BM25 was not chosen (zero extra infrastructure, learned token weights, no Chinese tokenizer dependency).
 
 Two structural findings drove the design:
 

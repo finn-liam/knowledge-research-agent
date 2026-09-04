@@ -345,9 +345,9 @@ async def kb_retriever_node(state: ResearchState) -> dict:
     try:
         await store.ensure_collection()
         if await store.count() > 0:
-            query_pairs: list[tuple[str, str | None]] = [
-                (dense_query, sparse_query if enhanced else None)
-            ]
+            # 主查询用用户原话（A/B: orig_multi K12 recall 0.523 vs 改写主路 0.520，K8 持平；
+            # 且不依赖改写质量）——LLM 改写的价值在 sub_queries 变体，文本见 ab_recall.json
+            query_pairs: list[tuple[str, str | None]] = [(query, None)]
             query_pairs += [(s, None) for s in sub_queries]
             fused = await _multi_query_search(store, query_pairs)
             if not fused and (enhanced or sub_queries):
