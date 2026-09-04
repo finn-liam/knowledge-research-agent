@@ -1,10 +1,16 @@
 """P2 召回优化 A/B：拆解生产路径三要素（多查询/单文档配额/精排）对 ID 级召回的贡献。
 
 ID 级口径：命中 = (document_id, chunk_index) ∈ 标注 relevant_chunks；窗口 K ∈ {8, 12}。
-LLM 增强结果缓存到 eval/results/enh_cache.json（首轮约 20 分钟，之后秒级）。
+LLM 增强结果缓存到 eval/results/enh_cache.json（已缓存 100 条，重跑零 API 成本）。
 
-用法：python eval/scripts/ab_recall.py
+用法：python eval/scripts/ab_recall.py [--variants raw,multi,orig_multi]（默认全部）
+变体：
+  raw           原问题单路 hybrid（基线）
+  orig_multi    ★ 原问题当主查询 + sub_queries 变体 + 精排（B1 假设：改写当主路有害的修正方案）
+  multi         改写当主查询 + 变体（当前生产组合）
+  其余变体见 search_variant()
 """
+import argparse
 import asyncio
 import json
 import sys
@@ -66,6 +72,13 @@ async def search_variant(store, it, cache, settings, variant: str) -> list[dict]
         s.strip() for s in (p.get("sub_queries") or [])
         if isinstance(s, str) and s.strip() and s.strip() != q
     ][:MAX_SUBQ]
+    if variant == "orig_multi":
+        # B1 假设：主查询用用户原话（A/B 实测改写当主路有害），变体承担语义扩展
+        pairs = [(q, None)] + [(s, None) for s in sub_qs]
+        fused = await _multi_query_search(store, pairs, top_k=20)
+        if not fused and sub_qs:
+            fused = await _hybrid_search(store, q, None, top_k=20)
+        return _apply_rerank(q, fused)
     if variant == "multi_main":  # 仅主查询增强（无 sub_queries）
         fused = await _hybrid_search(store, dense_q, sparse_q if dense_q != q else None, top_k=20)
     else:
@@ -94,6 +107,14 @@ def id_pr(hits, rel_ids, k: int) -> tuple[float, float]:
 
 
 async def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--variants",
+        default="raw,orig_multi,multi,multi_rerank",
+        help="逗号分隔变体列表（默认 raw,orig_multi,multi,multi_rerank）",
+    )
+    args = parser.parse_args()
+
     items = json.loads((PROJECT_ROOT / "eval" / "dataset.json").read_text(encoding="utf-8"))
     store = get_vector_store()
     await store.ensure_collection()
@@ -101,11 +122,10 @@ async def main() -> int:
     llm = get_llm() if settings.query_processing else None
 
     cache = await enhance_cached(llm, items) if llm else {}
+    variants = [v.strip() for v in args.variants.split(",") if v.strip()]
     # 无 LLM 时多查询变体退化为 raw，只跑 raw 类
-    variants = (
-        ["raw", "raw_rerank", "multi_main", "multi", "multi_cap", "multi_rerank", "multi_cap_rerank"]
-        if llm else ["raw", "raw_rerank"]
-    )
+    if not llm:
+        variants = [v for v in variants if v.startswith("raw")] or ["raw"]
 
     print(f"[ab] 变体 {variants} | 数据集 {len(items)} 条", flush=True)
     agg = {v: {8: {"p": [], "r": []}, 12: {"p": [], "r": []}} for v in variants}
@@ -132,13 +152,12 @@ async def main() -> int:
         for v in variants:
             print(f"{v:<18} {mean(agg[v][k]['p']):<10.3f} {mean(agg[v][k]['r']):<10.3f}")
 
-    # 保存供报告引用
-    out = {
-        v: {f"k{k}": {"precision": mean(agg[v][k]["p"]), "recall": mean(agg[v][k]["r"])}
-            for k in (8, 12)}
-        for v in variants
-    }
+    # 保存（合并历史变体结果，只覆盖本次跑的）
     out_path = PROJECT_ROOT / "eval" / "results" / "ab_recall.json"
+    out = json.loads(out_path.read_text(encoding="utf-8")) if out_path.exists() else {}
+    for v in variants:
+        out[v] = {f"k{k}": {"precision": mean(agg[v][k]["p"]), "recall": mean(agg[v][k]["r"])}
+                  for k in (8, 12)}
     out_path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\n[ab] 已写入 {out_path}", flush=True)
     print("AB_DONE", flush=True)
