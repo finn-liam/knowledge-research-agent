@@ -32,9 +32,6 @@ from app.llm.gateway import get_llm
 from app.models.research import STEP_DEFS, Citation, Report, ResearchStep, ResearchTask, Source
 
 MAX_KB_SOURCES = 8
-# 已废弃的单文档配额（A/B 实测精排前配额损害召回，见 eval/results/ab_recall.json）；
-# 保留常量仅为兼容外部引用，检索路径不再使用
-MAX_CHUNKS_PER_DOC = 3
 MAX_GRADE_SOURCES = 12  # merger 输出给 grader 评估的候选上限
 _step_lock = asyncio.Lock()
 

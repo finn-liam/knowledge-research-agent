@@ -16,7 +16,6 @@ class ResearchState(TypedDict, total=False):
     search_mode: str                 # 检索范围：kb_only（渐进式）/ multi（三路全开）
     topic: str                       # 从查询中提炼的研究主题
     lang: str                        # 报告语言偏好 zh / en
-    mode: str
     plan: list[str]                  # Planner 产出的子查询
     kb_results: list[dict]
     paper_results: list[dict]

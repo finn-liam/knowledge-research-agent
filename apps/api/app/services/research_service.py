@@ -30,7 +30,6 @@ async def create_task(query: str, lang: str = "zh") -> str:
                 id=task_id,
                 title=mock_data.task_title(topic),
                 query=query,
-                mode="deep",
                 status="running",
             )
         )
