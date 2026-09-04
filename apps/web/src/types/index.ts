@@ -102,6 +102,26 @@ export interface SseEvent {
   data: Record<string, unknown>;
 }
 
+/** 研究过程时间线条目（C1：Agent 思考直播） */
+export type TimelineKind =
+  | "router"
+  | "step_started"
+  | "step_completed"
+  | "step_failed"
+  | "step_skipped"
+  | "sources"
+  | "grade"
+  | "rewrite"
+  | "report_done"
+  | "error";
+
+export interface TimelineEntry {
+  id: number;
+  ts: number;
+  kind: TimelineKind;
+  text: string;
+}
+
 /** 知识库文档 */
 export interface KbDocument {
   id: number;

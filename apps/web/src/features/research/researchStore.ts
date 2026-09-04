@@ -7,6 +7,8 @@ import type {
   SourceItem,
   StepInfo,
   TaskDetail,
+  TimelineEntry,
+  TimelineKind,
 } from "@/types";
 
 /** 与后端 STEP_DEFS 对齐（效果图2 顺序）：kb/论文/网页/报告启用，知识图谱已暂停 */
@@ -37,6 +39,7 @@ interface ResearchState {
   messages: ChatMessage[]; // 多轮对话历史
   reports: ReportInfo[]; // 多轮报告历史（version 升序）
   snapshotLocked: boolean; // 新一轮开始后禁止 onopen 快照覆盖报告
+  timeline: TimelineEntry[]; // 研究过程时间线（C1：Agent 思考直播，最新在底部）
 
   hydrate: (d: TaskDetail) => void;
   beginRun: (taskId: string, query: string, title: string) => void;
@@ -47,6 +50,75 @@ interface ResearchState {
 }
 
 const cloneSteps = () => DEFAULT_STEPS.map((s) => ({ ...s, meta: {} }));
+
+// 时间线：入列 + 截断（只保留最近 100 条，防止长研究内存增长）
+let timelineSeq = 0;
+function pushTimeline(list: TimelineEntry[], kind: TimelineKind, text: string): TimelineEntry[] {
+  timelineSeq += 1;
+  return [...list, { id: timelineSeq, ts: Date.now(), kind, text }].slice(-100);
+}
+
+// 事件 → 时间线文案（与步骤卡中文文案风格一致）
+function timelineText(event: string, data: Record<string, unknown>): { kind: TimelineKind; text: string } | null {
+  const label = typeof data.label === "string" ? data.label : "";
+  switch (event) {
+    case "router_result": {
+      const t = String(data.type ?? "knowledge");
+      const mode = String(data.sources ?? "kb_only");
+      if (t === "chat") return { kind: "router", text: "意图识别：闲聊，跳过检索直接回答" };
+      return mode === "multi"
+        ? { kind: "router", text: "意图识别：知识问题，三路全开（知识库 ∥ 论文 ∥ 网页）" }
+        : { kind: "router", text: "意图识别：知识问题，先查企业知识库（渐进式）" };
+    }
+    case "step_started":
+      return { kind: "step_started", text: `${label || "步骤"} · 开始` };
+    case "step_completed": {
+      const hits = data.hits;
+      return {
+        kind: "step_completed",
+        text:
+          typeof hits === "number"
+            ? `${label || "步骤"} · 完成（命中 ${hits} 条）`
+            : `${label || "步骤"} · 完成`,
+      };
+    }
+    case "step_failed":
+      return { kind: "step_failed", text: `${label || "步骤"} · 失败` };
+    case "step_skipped":
+      return { kind: "step_skipped", text: `${label || "步骤"} · 跳过` };
+    case "sources_final": {
+      const n = Array.isArray(data.sources) ? data.sources.length : 0;
+      return n > 0
+        ? { kind: "sources", text: `来源融合：${n} 条候选进入质量评判` }
+        : null;
+    }
+    case "grade_result": {
+      const grades = Array.isArray(data.grades) ? data.grades : [];
+      const high = grades.filter(
+        (g) => typeof (g as Record<string, unknown>)?.score === "number" &&
+          ((g as Record<string, unknown>).score as number) >= 0.6,
+      ).length;
+      const low = grades.filter(
+        (g) => typeof (g as Record<string, unknown>)?.score === "number" &&
+          ((g as Record<string, unknown>).score as number) < 0.4,
+      ).length;
+      return { kind: "grade", text: `质量评判：${grades.length} 条中高分 ${high} 条、低分 ${low} 条` };
+    }
+    case "rewrite": {
+      const q = String(data.query ?? "");
+      return { kind: "rewrite", text: `反思重查：改写问题为「${q.slice(0, 40)}${q.length > 40 ? "…" : ""}」` };
+    }
+    case "report_completed": {
+      const stats = (data.stats ?? {}) as Record<string, unknown>;
+      const n = typeof stats.sources_count === "number" ? stats.sources_count : 0;
+      return { kind: "report_done", text: `报告生成完成（基于 ${n} 条来源）` };
+    }
+    case "error":
+      return { kind: "error", text: `流程错误：${String(data.message ?? "未知")}` };
+    default:
+      return null;
+  }
+}
 
 // 流式节流：report_token 累积到 pending，100ms 批量刷入 reportBuffer（降低全树重渲染频率）
 const FLUSH_INTERVAL_MS = 100;
@@ -89,6 +161,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   messages: [],
   reports: [],
   snapshotLocked: false,
+  timeline: [],
 
   hydrate: (d) => {
     const running = d.status === "running";
@@ -109,6 +182,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       messages: d.messages,
       reports: d.reports ?? [],
       snapshotLocked: false,
+      timeline: [],
     });
   },
 
@@ -131,10 +205,15 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       selectedRefNo: null,
       messages,
       snapshotLocked: true, // 本轮报告只能来自 SSE 流式，禁止快照覆盖
+      timeline: [{ id: ++timelineSeq, ts: Date.now(), kind: "router", text: "新问题已提交，开始研究" }],
     });
   },
 
   applyEvent: (event, data) => {
+    // 时间线：先入列（独立于下方状态切换，任何事件都不阻塞）
+    const tl = timelineText(event, data);
+    if (tl) set({ timeline: pushTimeline(get().timeline, tl.kind, tl.text) });
+
     const state = get();
     switch (event) {
       case "router_result": {

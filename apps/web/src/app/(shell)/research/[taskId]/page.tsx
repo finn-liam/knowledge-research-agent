@@ -7,6 +7,7 @@ import { RightPanel } from "@/components/layout/RightPanel";
 import { AgentHeader } from "@/components/research/AgentHeader";
 import { AgentStepCards } from "@/components/research/AgentStepCards";
 import { Disclaimer } from "@/components/research/Disclaimer";
+import { ProcessTimeline } from "@/components/research/ProcessTimeline";
 import { ReportHeader } from "@/components/research/ReportHeader";
 import { ReportViewer } from "@/components/research/ReportViewer";
 import { ResearchComposer } from "@/components/research/ResearchComposer";
@@ -88,6 +89,7 @@ export default function ResearchPage() {
                     <div className="space-y-4">
                       <AgentHeader phase={store.phase} />
                       <AgentStepCards steps={store.steps} />
+                      <ProcessTimeline />
 
                       {store.phase === "failed" && (
                         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
