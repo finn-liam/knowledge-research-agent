@@ -19,19 +19,19 @@ MULTI_KEYWORDS = [
 
 
 def mock_route(query: str) -> dict:
-    """意图判断兜底（无 Key/LLM 失败）：问候词表启发式；极短输入视为闲聊；
-    点名外部信息/对比需求 → multi；其余默认 knowledge + kb_only。"""
+    """检索规划兜底（无 Key/LLM 失败）：问候词表启发式；极短输入视为闲聊；
+    点名论文/网页关键词逐源置位；其余默认仅 KB。"""
     q = query.strip().lower()
     if any(k in q for k in CHAT_KEYWORDS) or len(q) <= 2:
-        return {"type": "chat", "sources": "kb_only"}
-    if any(k in q for k in MULTI_KEYWORDS):
-        return {"type": "knowledge", "sources": "multi"}
-    return {"type": "knowledge", "sources": "kb_only"}
+        return {"type": "chat", "kb": False, "paper": False, "web": False}
+    paper = any(k in q for k in ("论文", "学术", "arxiv"))
+    web = any(k in q for k in MULTI_KEYWORDS)
+    return {"type": "knowledge", "kb": True, "paper": paper, "web": web}
 
 
 def mock_query_process(query: str) -> dict:
     """查询增强兜底（无 Key/LLM 失败）：返回原问题，行为与现状一致（不产生多查询）。"""
-    return {"rewritten_query": query, "keywords": [], "sub_queries": []}
+    return {"rewritten_query": query, "keywords": [], "sub_queries": [], "hyde": ""}
 
 _STRIP_TOKENS = [
     "请", "帮我", "帮忙", "分析", "研究", "评估", "探索", "解读", "一下",

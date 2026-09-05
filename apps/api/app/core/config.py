@@ -62,6 +62,10 @@ class Settings(BaseSettings):
     query_processing: bool = True
     # 多查询检索：改写时生成 sub_queries 变体，多路语义检索后跨查询 RRF 合并（false 仅主查询）
     multi_query: bool = True
+    # HyDE：LLM 生成假设性答案作为一路检索变体（每问 +1 次 LLM 调用，评估侧结果有缓存）
+    hyde_enabled: bool = True
+    # 兄弟切片扩展：命中切片的 ±1 邻居自动进入候选（零 LLM 成本）
+    sibling_expand: bool = True
     # 重排：RRF 融合后 bge-reranker-v2-m3 模型精排（false 仅 RRF 排名）
     rerank_enabled: bool = True
 

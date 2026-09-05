@@ -1,18 +1,24 @@
 """LangGraph 各节点的 Prompt 模板（真实 LLM 模式使用）。"""
 
-ROUTER_PROMPT = """你是一名企业知识库助手的意图识别器。判断用户这句话是否需要检索资料，以及检索范围。
+ROUTER_PROMPT = """你是一名企业知识库助手的检索规划器（Planner）。判断用户这句话是否需要检索资料，以及需要哪些来源。
 
 用户输入：{query}
 
 输出 JSON（不要输出其他内容）：
-{{"type": "chat" 或 "knowledge", "sources": "kb_only" 或 "multi"}}
+{{"type": "chat" 或 "knowledge", "kb": true/false, "paper": true/false, "web": true/false}}
 
 判断规则：
-- "chat"：寒暄、闲聊、问候、感谢、告别、自我介绍类（如"你好""谢谢""你是谁"），不需要检索资料（sources 填 "kb_only" 即可）
-- "knowledge"：需要检索资料回答的知识问题，按检索范围选 sources：
-  - "kb_only"：仅企业知识库就足够（内部制度、流程、项目细节、文档内容等，用户未要求外部信息）
-  - "multi"：需要外部信息（用户明确要求网页/网上/论文/学术/搜索/最新进展/行业趋势，或要求把知识库内容与外部信息做对比）
-其他情况默认 knowledge + kb_only。
+- "chat"：寒暄、闲聊、问候、感谢、告别、自我介绍类（如"你好""谢谢""你是谁"），不需要检索，三个来源全 false
+- "knowledge"：需要检索资料回答的知识问题，逐源规划：
+  - "kb"：企业知识库。默认 true（内部制度、流程、项目细节、文档内容、代码说明，或不确定该问哪时）
+  - "paper"：用户明确提到 论文/学术/arXiv/研究/学术进展 时 true
+  - "web"：用户明确提到 网页/网上/最新/新闻/官网/业界动态 时 true；纯公网时事且与企业内部无关时 kb 可为 false
+  - 对比企业内部与外部信息 → 三个全 true
+示例：
+"Python是什么" → {{"type":"knowledge","kb":true,"paper":false,"web":false}}
+"OpenAI最新发布了什么模型" → {{"type":"knowledge","kb":false,"paper":false,"web":true}}
+"Transformer 最新研究" → {{"type":"knowledge","kb":true,"paper":true,"web":true}}
+"对比我们的方案和学术界的最新做法" → {{"type":"knowledge","kb":true,"paper":true,"web":true}}
 """
 
 CHAT_PROMPT = """你是一名企业知识库助手。用户对你说：{query}
@@ -27,11 +33,13 @@ QUERY_PROCESS_PROMPT = """你是一名检索优化助手。用户的问题：
 {{
   "rewritten_query": "改写后的规范检索问题（补全专业术语、去除口语化表述）",
   "keywords": ["5-8 个与问题强相关的检索关键词/同义词/子主题，中文为主"],
-  "sub_queries": ["2-3 个从不同角度/不同措辞检索同一问题的查询变体"]
+  "sub_queries": ["2-3 个从不同角度/不同措辞检索同一问题的查询变体"],
+  "hyde": "假设性答案（60-120 字，凭常识直接回答该问题；不必真实正确，目的是让检索词贴近文档的表述方式）"
 }}
 要求：
 - keywords 用于知识库关键词检索，尽量覆盖同一概念的不同说法。
 - sub_queries 用于多路语义检索：换一种问法/术语体系（如"api_client 初始值"→"api_client = 的赋值语句"），每条都要能独立作为检索问题。
+- hyde 是 HyDE 检索变体：写成"看起来像文档里会出现的答案段落"，而不是问题本身。
 """
 
 REPORT_PROMPT = """你是一名企业知识库问答助手。请直接回答用户问题「{query}」。

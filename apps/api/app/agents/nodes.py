@@ -29,10 +29,21 @@ from app.db.session import SessionLocal
 from app.integrations.arxiv_client import search_papers
 from app.integrations.web_search import search_web
 from app.llm.gateway import get_llm
-from app.models.research import STEP_DEFS, Citation, Report, ResearchStep, ResearchTask, Source
+from app.models.research import (
+    STEP_DEFS,
+    Citation,
+    Document,
+    DocumentChunk,
+    Report,
+    ResearchStep,
+    ResearchTask,
+    Source,
+)
 
-MAX_KB_SOURCES = 8
+MAX_KB_SOURCES = 12  # KB 候选上限（= merger 窗口；兄弟扩展后仍能整体进入精排）
 MAX_GRADE_SOURCES = 12  # merger 输出给 grader 评估的候选上限
+SIBLING_BASE = 6      # 兄弟扩展：参与扩展的核心命中数
+SIBLING_MAX_ADD = 6   # 兄弟扩展：最多补充的邻居切片数（核心+邻居 ≤ MAX_KB_SOURCES）
 _step_lock = asyncio.Lock()
 
 settings = get_settings()
@@ -90,16 +101,20 @@ def _emit_sources(task_id: str, sources: list[dict]) -> None:
 # ---------------- 意图路由（chat / knowledge） ----------------
 
 async def fanout_node(state: ResearchState) -> dict:
-    """扇出占位节点：KB 无命中时经由它并行分发到论文/网页两路检索。"""
+    """扇出占位节点：multi 模式三路并行 / KB 无命中升级补查（fanout_external）时经由它分发。"""
     return {}
 
 
-async def router_node(state: ResearchState) -> dict:
-    """判断用户输入是否需要检索：chat（寒暄/闲聊）→ 直接回复；knowledge → 走检索流程。
+async def fanout_external_node(state: ResearchState) -> dict:
+    """KB 无命中升级：解除 paper/web 的规划跳过（本轮补查外部源）。"""
+    return {"plan": ["kb", "paper", "web"], "external_run": True}
 
-    同时输出检索范围 search_mode：
-      kb_only —— 仅企业知识库（渐进式：命中即跳过外部源）
-      multi   —— 三路全开（用户点名网页/论文/对比/最新进展等外部信息需求）
+
+async def router_node(state: ResearchState) -> dict:
+    """检索规划器（Planner）：chat 直接回复；knowledge 逐源规划 kb/paper/web。
+
+    plan = 规划的来源子集；search_mode 由 plan 派生（多源=multi，仅KB=kb_only 渐进式）。
+    兼容旧输出格式 {"sources": "kb_only"/"multi"}（LLM 偶发老格式时降级解析）。
     """
     task_id = state["task_id"]
     query = state.get("original_query") or state["query"]
@@ -107,31 +122,41 @@ async def router_node(state: ResearchState) -> dict:
     payload = await llm.extract_json(
         ROUTER_PROMPT.format(query=query), mock_data.mock_route(query)
     )
-    qtype = (payload.get("type") if isinstance(payload, dict) else None) or "knowledge"
+    payload = payload if isinstance(payload, dict) else {}
+    qtype = payload.get("type") or "knowledge"
     if qtype not in ("chat", "knowledge"):
         qtype = "knowledge"
-    smode = (payload.get("sources") if isinstance(payload, dict) else None) or "kb_only"
-    if smode not in ("kb_only", "multi"):
-        smode = "kb_only"
+
+    if qtype == "chat":
+        plan: list[str] = []
+    elif "kb" in payload or "paper" in payload or "web" in payload:
+        plan = [s for s in ("kb", "paper", "web") if payload.get(s) is True]
+        if not plan:
+            plan = ["kb"]
+    else:  # 旧格式兼容
+        plan = ["kb", "paper", "web"] if payload.get("sources") == "multi" else ["kb"]
+
+    search_mode = "kb_only" if plan == ["kb"] else "multi"
 
     paused_steps = ["kb_search", "paper_search", "web_search", "graph_build"]
     if qtype == "chat":
         # 闲聊路径：检索相关步骤标记为已暂停（DB 状态；前端由 router_result 事件同步）
-        smode = "kb_only"
         for key, label in STEP_DEFS:
             if key in paused_steps:
                 await _step(task_id, key, label, "paused")
     EVENT_BUS.emit(
         task_id, "router_result",
-        {"type": qtype, "query": query[:40], "paused_steps": paused_steps, "sources": smode},
+        {"type": qtype, "query": query[:40], "paused_steps": paused_steps,
+         "sources": "multi" if len(plan) > 1 else "kb_only", "plan": plan},
     )
-    return {"query_type": qtype, "search_mode": smode}
+    return {"query_type": qtype, "search_mode": search_mode, "plan": plan, "escalation": False}
 
 
 # ---------------- 知识库检索（混合检索：bge-m3 dense+sparse 双路 RRF） ----------------
 
 async def _fuse_hybrid(
-    store, dense_hits: list[dict], sparse_hits: list[dict], query_dense: list[float]
+    store, dense_hits: list[dict], sparse_hits: list[dict], query_dense: list[float],
+    min_score: float | None = None, relax_min_score: float | None = None,
 ) -> list[dict]:
     """双路合并 → 阈值过滤 → RRF 排序。
 
@@ -167,16 +192,18 @@ async def _fuse_hybrid(
             )
 
     cands: list[dict] = []
+    ms = settings.kb_min_score if min_score is None else min_score
+    rms = settings.kb_relax_min_score if relax_min_score is None else relax_min_score
     for h in merged.values():
         dense_score = h["score"] if h["dense_rank"] is not None else h.get("dense_score_extra", 0.0)
         h["relevance"] = dense_score
-        if h["dense_rank"] is not None and h["score"] >= settings.kb_min_score:
+        if h["dense_rank"] is not None and h["score"] >= ms:
             cands.append(h)
         elif (
             h["dense_rank"] is None
             and h["sparse_rank"] is not None
             and h["sparse_rank"] <= 5
-            and h.get("dense_score_extra", 0.0) >= settings.kb_relax_min_score
+            and h.get("dense_score_extra", 0.0) >= rms
         ):
             cands.append(h)
 
@@ -224,7 +251,10 @@ def _apply_rerank(query: str, cands: list[dict]) -> list[dict]:
     return cands
 
 
-async def _hybrid_search(store, dense_text: str, sparse_text: str | None, top_k: int = 20) -> list[dict]:
+async def _hybrid_search(
+    store, dense_text: str, sparse_text: str | None, top_k: int = 20,
+    min_score: float | None = None, relax_min_score: float | None = None,
+) -> list[dict]:
     """双路混合检索：dense 用简洁文本，sparse 用关键词文本；返回 RRF 融合候选。
 
     dense_text == sparse_text 时仅编码一次（两路取自同一编码）。
@@ -266,13 +296,17 @@ async def _hybrid_search(store, dense_text: str, sparse_text: str | None, top_k:
         if settings.hybrid_search and sparse_vec is not None
         else []
     )
-    fused = await _fuse_hybrid(store, dense_hits, sparse_hits, dense_vec)
+    fused = await _fuse_hybrid(
+        store, dense_hits, sparse_hits, dense_vec,
+        min_score=min_score, relax_min_score=relax_min_score,
+    )
     # 注：精排统一在 merger 节点对三路候选执行（避免 KB 内重复计算）
     return fused
 
 
 async def _multi_query_search(
-    store, query_pairs: list[tuple[str, str | None]], top_k: int = 20
+    store, query_pairs: list[tuple[str, str | None]], top_k: int = 20,
+    min_score: float | None = None, relax_min_score: float | None = None,
 ) -> list[dict]:
     """多查询检索：每路各自 hybrid 检索，再跨查询 RRF 合并（等权、按 chunk id 去重）。
 
@@ -285,7 +319,10 @@ async def _multi_query_search(
     for dense_text, sparse_text in query_pairs:
         if not dense_text:
             continue
-        res = await _hybrid_search(store, dense_text, sparse_text, top_k=top_k)
+        res = await _hybrid_search(
+            store, dense_text, sparse_text, top_k=top_k,
+            min_score=min_score, relax_min_score=relax_min_score,
+        )
         if res:
             result_lists.append(res)
 
@@ -312,15 +349,100 @@ async def _multi_query_search(
     return merged
 
 
+async def _expand_with_siblings(fused: list[dict]) -> list[dict]:
+    """兄弟切片扩展（auto-merging retrieval）：核心命中的 ±1 邻居就近插入候选。
+
+    治"答案横跨相邻切片"的召回摊薄——命中 46 号后 45/47 大概率同样相关，
+    ID 级标注往往覆盖整个邻域。邻居按核心命中顺序就近插入（不追加尾部），
+    保证能进入 merger 的 top-12 精排窗口；去重、总量受 SIBLING_MAX_ADD 约束。
+    """
+    if not fused:
+        return fused
+    core = fused[:SIBLING_BASE]
+    existing = {(h["document_id"], h["chunk_index"]) for h in fused}
+
+    # 批量取邻居文本与文档名（SQLite 两次小查询）
+    need: dict[int, set[int]] = {}
+    for h in core:
+        d, i = h["document_id"], h["chunk_index"]
+        need.setdefault(d, set()).update((i - 1, i + 1))
+    nb_map: dict[tuple[int, int], dict] = {}
+    async with SessionLocal() as db:
+        for d, idxs in need.items():
+            rows = (
+                await db.execute(
+                    select(DocumentChunk).where(
+                        DocumentChunk.document_id == d,
+                        DocumentChunk.chunk_index.in_([i for i in idxs if i >= 0]),
+                    )
+                )
+            ).scalars().all()
+            for r in rows:
+                nb_map[(r.document_id, r.chunk_index)] = {
+                    "text": r.text or "", "parent_text": r.parent_text or ""
+                }
+        doc_ids = list(need.keys())
+        names = {
+            r[0]: r[1]
+            for r in (
+                await db.execute(
+                    select(Document.id, Document.name).where(Document.id.in_(doc_ids))
+                )
+            ).all()
+        }
+
+    expanded: list[dict] = []
+    added = 0
+    for h in core:
+        expanded.append(h)
+        if added >= SIBLING_MAX_ADD:
+            continue
+        d, i = h["document_id"], h["chunk_index"]
+        for ni in (i - 1, i + 1):
+            if added >= SIBLING_MAX_ADD:
+                break
+            key = (d, ni)
+            if key in existing or key not in nb_map:
+                continue
+            existing.add(key)
+            nb = nb_map[key]
+            expanded.append({
+                "id": f"sib-{d}-{ni}",
+                "document_id": d,
+                "chunk_index": ni,
+                "document_name": names.get(d, ""),
+                "text": nb["text"],
+                "parent_text": nb["parent_text"],
+                "relevance": h.get("relevance", 0.0),
+                "page_nos": [],
+                "sibling": True,
+            })
+            added += 1
+    return expanded
+
+
 async def kb_retriever_node(state: ResearchState) -> dict:
     task_id, query = state["task_id"], state["query"]
     topic = mock_data.extract_topic(query)
     started = time.time()
+
+    # Planner 逐源规划：KB 不在规划内 → 跳过（步骤标记 skipped，前端可见）
+    plan = state.get("plan") or ["kb"]
+    if "kb" not in plan:
+        await _step(task_id, "kb_search", "查询企业知识库", "skipped")
+        return {"kb_results": []}
+
     await _step(task_id, "kb_search", "查询企业知识库", "running")
 
-    # 查询增强：LLM 改写 + 关键词扩展 + 多查询变体（一次调用；Mock/失败 → 原问题）
+    # 反思重查最终轮（escalation）：加大检索量 + 放宽阈值
+    esc = bool(state.get("escalation"))
+    top_k = 30 if esc else 20
+    min_score = (settings.kb_min_score - 0.05) if esc else None
+
+    # 查询增强：LLM 改写 + 关键词扩展 + 多查询变体 + HyDE（一次调用；Mock/失败 → 原问题）
     dense_query, sparse_query = query, query
     sub_queries: list[str] = []
+    hyde_text = ""
     enhanced = False
     if settings.query_processing:
         llm = get_llm()
@@ -336,6 +458,8 @@ async def kb_retriever_node(state: ResearchState) -> dict:
                 for s in (processed.get("sub_queries") or [])
                 if isinstance(s, str) and s.strip() and s.strip() != query
             ][:2]
+        if settings.hyde_enabled and settings.multi_query:
+            hyde_text = str(processed.get("hyde") or "").strip()
 
     results: list[dict] = []
     kb_status = "empty"  # empty / no_hits / unreachable / ok
@@ -349,14 +473,21 @@ async def kb_retriever_node(state: ResearchState) -> dict:
             # 且不依赖改写质量）——LLM 改写的价值在 sub_queries 变体，文本见 ab_recall.json
             query_pairs: list[tuple[str, str | None]] = [(query, None)]
             query_pairs += [(s, None) for s in sub_queries]
-            fused = await _multi_query_search(store, query_pairs)
-            if not fused and (enhanced or sub_queries):
+            if hyde_text and hyde_text != query:
+                query_pairs.append((hyde_text, None))  # HyDE 变体：假设答案贴近文档表述
+            fused = await _multi_query_search(
+                store, query_pairs, top_k=top_k, min_score=min_score
+            )
+            if not fused and (enhanced or sub_queries or hyde_text):
                 # 增强未命中 → 回退原问题直接检索（兜底不劣化）
-                fused = await _hybrid_search(store, query, None)
+                fused = await _hybrid_search(store, query, None, top_k=top_k, min_score=min_score)
             if not fused:
                 kb_status = "no_hits"
             else:
                 kb_status = "ok"
+                # 兄弟切片扩展：命中切片的 ±1 邻居就近插入（治标注邻域摊薄，零 LLM 成本）
+                if settings.sibling_expand:
+                    fused = await _expand_with_siblings(fused)
                 # 注：不做单文档配额——A/B 实测配额在精排前挤掉同文档的标注相关片段
                 # （multi_cap_rerank 0.410 vs multi_rerank 0.497）；多样性由 merger 统一精排+标题去重保证
                 for h in fused:
@@ -449,6 +580,13 @@ async def paper_retriever_node(state: ResearchState) -> dict:
     task_id = state["task_id"]
     active_query = state.get("query") or state.get("original_query", "")
     started = time.time()
+
+    # Planner 逐源规划：论文不在规划内（且非 KB 未命中升级补查）→ 跳过
+    plan = state.get("plan") or ["kb", "paper", "web"]
+    if "paper" not in plan and not state.get("external_run"):
+        await _step(task_id, "paper_search", "检索学术论文", "skipped")
+        return {"paper_results": []}
+
     await _step(task_id, "paper_search", "检索学术论文", "running")
 
     raw = await search_papers(active_query, max_results=5)
@@ -481,6 +619,13 @@ async def web_retriever_node(state: ResearchState) -> dict:
     task_id = state["task_id"]
     active_query = state.get("query") or state.get("original_query", "")
     started = time.time()
+
+    # Planner 逐源规划：网页不在规划内（且非 KB 未命中升级补查）→ 跳过
+    plan = state.get("plan") or ["kb", "paper", "web"]
+    if "web" not in plan and not state.get("external_run"):
+        await _step(task_id, "web_search", "搜索网页信息", "skipped")
+        return {"web_results": []}
+
     await _step(task_id, "web_search", "搜索网页信息", "running")
 
     raw = await search_web(f"{active_query} 最新进展", max_results=5)
@@ -638,9 +783,18 @@ async def rewrite_node(state: ResearchState) -> dict:
     )
     new_query = (payload.get("rewritten_query") or state.get("original_query", "")).strip()
     EVENT_BUS.emit(task_id, "rewrite", {"query": new_query})
+    next_retry = state.get("retry_count", 0) + 1
+    # Research Loop 升级：最终轮（retry 将达上限 2）自动扩大火力——
+    # 强制三路全开 + 放宽阈值 + 加大检索量（kb_retriever 读 escalation）
+    escalation = next_retry >= 2
+    if escalation:
+        EVENT_BUS.emit(task_id, "rewrite", {"query": new_query, "escalation": True})
     return {
         "query": new_query,
-        "retry_count": state.get("retry_count", 0) + 1,
+        "retry_count": next_retry,
+        "escalation": escalation,
+        "plan": ["kb", "paper", "web"] if escalation else state.get("plan"),
+        "search_mode": "multi" if escalation else state.get("search_mode"),
     }
 
 

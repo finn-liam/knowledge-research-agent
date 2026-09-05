@@ -22,7 +22,7 @@ from sqlalchemy import select  # noqa: E402
 from app.agents.mock_data import mock_query_process  # noqa: E402
 from app.agents.nodes import (  # noqa: E402
     _apply_rerank,
-    _build_enhanced_queries,
+    _expand_with_siblings,
     _hybrid_search,
     _multi_query_search,
 )
@@ -43,7 +43,10 @@ ENH_CACHE_PATH = EVAL_DIR / "results" / "enh_cache.json"
 
 
 async def _enhance_cached(llm, question: str) -> dict:
-    """查询增强结果缓存：与 ab_recall.py 共用（首轮 LLM 逐条生成，后续秒级）。"""
+    """查询增强结果缓存：与 ab_recall.py 共用（首轮 LLM 逐条生成，后续秒级）。
+
+    条目缺 hyde 字段（旧版缓存）时回填——HyDE 变体依赖该字段。
+    """
     import json as _json
 
     cache = (
@@ -51,7 +54,7 @@ async def _enhance_cached(llm, question: str) -> dict:
         if ENH_CACHE_PATH.exists()
         else {}
     )
-    if question in cache:
+    if question in cache and "hyde" in cache[question]:
         return cache[question]
     processed = await llm.extract_json(
         QUERY_PROCESS_PROMPT.format(query=question), mock_query_process(question)
@@ -60,32 +63,38 @@ async def _enhance_cached(llm, question: str) -> dict:
         "rewritten_query": processed.get("rewritten_query") or question,
         "keywords": processed.get("keywords") or [],
         "sub_queries": processed.get("sub_queries") or [],
+        "hyde": str(processed.get("hyde") or ""),
     }
     ENH_CACHE_PATH.write_text(_json.dumps(cache, ensure_ascii=False, indent=1), encoding="utf-8")
     return cache[question]
 
 
 async def production_kb_candidates(store, question: str, llm) -> list[dict]:
-    """对齐生产 kb_retriever_node 的 KB 检索路径：增强+多查询 → 精排。
+    """对齐生产 kb_retriever_node 的 KB 检索路径：原话主查询+子查询+HyDE → 兄弟扩展 → 精排。
 
-    llm 传 None 时退化为原问题单路检索（仍做精排）。
+    llm 传 None 时退化为原问题单路检索（仍做兄弟扩展与精排）。
     """
     settings = get_settings()
-    dense_q, sparse_q, sub_qs = question, question, []
+    sub_qs, hyde_text = [], ""
     if llm is not None and settings.query_processing:
         processed = await _enhance_cached(llm, question)
-        dense_q, sparse_q = _build_enhanced_queries(processed, question)
         sub_qs = [
             s.strip() for s in (processed.get("sub_queries") or [])
             if isinstance(s, str) and s.strip() and s.strip() != question
         ][:2]
+        if settings.hyde_enabled and settings.multi_query:
+            hyde_text = str(processed.get("hyde") or "").strip()
 
     # 主查询用原话（与生产 kb_retriever_node 一致，见 ab_recall orig_multi 结论）
     pairs = [(question, None)]
     pairs += [(s, None) for s in sub_qs]
+    if hyde_text and hyde_text != question:
+        pairs.append((hyde_text, None))
     fused = await _multi_query_search(store, pairs, top_k=EVAL_TOP_K)
-    if not fused and (dense_q != question or sub_qs):
+    if not fused and (sub_qs or hyde_text):
         fused = await _hybrid_search(store, question, None)
+    if settings.sibling_expand and fused:
+        fused = await _expand_with_siblings(fused)
 
     # 不做单文档配额（A/B 实测有害）；精排后由生产 merger 的 top-12 窗口截取
     if settings.rerank_enabled:

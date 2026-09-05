@@ -1,16 +1,17 @@
-"""LangGraph 装配（意图路由 + 渐进式/全源检索 + Self-RAG）：
+"""LangGraph 装配（Planner 逐源规划 + 渐进式/多源检索 + Self-RAG 升级重查）：
 
-START → router ──chat──→ report_write → END
-             └─kb_only→ kb_search（先只查企业知识库）
-                 kb_search ──有命中──→ merger（跳过论文/网页，省下游成本）
-                 kb_search ──无命中──→ fanout_external → (paper ∥ web) → merger
-             └─multi──→ fanout → (kb ∥ paper ∥ web) → merger
-                 （用户点名网页/论文/对比/最新进展等 → 三路全开）
+START → router（Planner：chat / 逐源规划 kb·paper·web）
+             ──chat──→ report_write → END
+             ──仅 kb──→ kb_search（渐进式：命中即融合，未命中升级补外部源）
+             ──多源──→ fanout → (kb ∥ paper ∥ web，未规划的源在节点内自跳过) → merger
                  merger → grade
                  grade ──高相关──→ report_write → END
-                 grade ──低分(<2次)──→ rewrite → 按 search_mode 回 kb_search 或 fanout（重检索）
+                 grade ──低分(<2次)──→ rewrite → 回检索
+                     （最终轮 escalation：强制三路全开 + 放宽阈值 + top_k 30）
                  grade ──耗尽──→ report_write（"未找到足够相关信息"分支）
 
+检索增强（kb_search 内）：原话主查询 + sub_queries 变体 + HyDE 假设答案 → 跨查询 RRF；
+命中切片的 ±1 兄弟邻居自动入候选（auto-merging）。
 知识图谱构建保持暂停（节点不在图中）。
 """
 from langgraph.graph import END, START, StateGraph
@@ -23,6 +24,7 @@ def route_after_router(state: ResearchState):
     # 返回 path_map 的 key（chat/kb_only/multi），而非目标节点名
     if state.get("query_type") == "chat":
         return "chat"
+    # Planner 逐源规划：仅 KB → 渐进式单路；其余组合 → 扇出（未规划的源在节点内自跳过）
     if state.get("search_mode") == "multi":
         return "multi"
     return "kb_only"
@@ -30,7 +32,10 @@ def route_after_router(state: ResearchState):
 
 def route_after_kb(state: ResearchState) -> str:
     """渐进式检索：KB 有命中 → 直接融合；无命中 → 升级补跑论文/网页。
-    multi 模式三路已并行启动 → 直接融合（不等 KB 单独判断升级）。"""
+    multi 模式多路已并行启动 → 直接融合（不等 KB 单独判断升级）；
+    KB 不在规划内（如纯网页问题）→ 直接融合。"""
+    if "kb" not in (state.get("plan") or ["kb"]):
+        return "merge"
     if state.get("search_mode") == "multi":
         return "merge"
     if state.get("kb_results"):
@@ -39,7 +44,9 @@ def route_after_kb(state: ResearchState) -> str:
 
 
 def route_after_rewrite(state: ResearchState) -> str:
-    """改写重查：multi 模式三路全量重跑；kb_only 模式同样先查 KB。"""
+    """改写重查：升级轮（escalation）强制三路全开；否则 multi 三路 / kb_only 先查 KB。"""
+    if state.get("escalation"):
+        return "multi"
     if state.get("search_mode") == "multi":
         return "multi"
     return "kb_only"
@@ -54,8 +61,8 @@ def build_graph():
 
     g.add_node("router", nodes.router_node)
     g.add_node("kb_search", nodes.kb_retriever_node)
-    g.add_node("fanout", nodes.fanout_node)           # 三路并行扇出（multi）
-    g.add_node("fanout_external", nodes.fanout_node)  # 外部两路升级（kb_only 无命中）
+    g.add_node("fanout", nodes.fanout_node)           # 多源并行扇出（multi / escalation）
+    g.add_node("fanout_external", nodes.fanout_external_node)  # 外部两路升级（kb_only 无命中）
     g.add_node("paper_search", nodes.paper_retriever_node)
     g.add_node("web_search", nodes.web_retriever_node)
     g.add_node("merger", nodes.merger_node)

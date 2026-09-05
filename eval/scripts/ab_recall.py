@@ -24,6 +24,7 @@ from app.agents.mock_data import mock_query_process  # noqa: E402
 from app.agents.nodes import (  # noqa: E402
     _apply_rerank,
     _build_enhanced_queries,
+    _expand_with_siblings,
     _hybrid_search,
     _multi_query_search,
 )
@@ -38,9 +39,15 @@ MAX_SUBQ = 2
 
 
 async def enhance_cached(llm, items) -> dict[str, dict]:
-    """批量缓存查询增强结果（process → rewritten/keywords/sub_queries）。"""
+    """批量缓存查询增强结果（rewritten/keywords/sub_queries/hyde）。
+
+    条目缺 hyde 字段（旧版缓存）时回填——HyDE 变体依赖该字段。
+    """
     cache = json.loads(CACHE_PATH.read_text(encoding="utf-8")) if CACHE_PATH.exists() else {}
-    todo = [it["question"] for it in items if it["question"] not in cache]
+    todo = [
+        it["question"] for it in items
+        if it["question"] not in cache or "hyde" not in cache[it["question"]]
+    ]
     if todo:
         print(f"[ab] 查询增强 {len(todo)} 条（缓存 {len(cache)} 条）...", flush=True)
     for i, q in enumerate(todo):
@@ -51,6 +58,7 @@ async def enhance_cached(llm, items) -> dict[str, dict]:
             "rewritten_query": processed.get("rewritten_query") or q,
             "keywords": processed.get("keywords") or [],
             "sub_queries": processed.get("sub_queries") or [],
+            "hyde": str(processed.get("hyde") or ""),
         }
         if (i + 1) % 20 == 0:
             CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -65,13 +73,26 @@ async def search_variant(store, it, cache, settings, variant: str) -> list[dict]
     q = it["question"]
     if variant == "raw":
         return await _hybrid_search(store, q, None, top_k=20)
-    # 其余变体都基于增强多查询
+
     p = cache.get(q) or mock_query_process(q)
-    dense_q, sparse_q = _build_enhanced_queries(p, q)
     sub_qs = [
         s.strip() for s in (p.get("sub_queries") or [])
         if isinstance(s, str) and s.strip() and s.strip() != q
     ][:MAX_SUBQ]
+    hyde = str(p.get("hyde") or "").strip()
+
+    # 二批变体：原话主查询 + 子查询 +（HyDE）+（兄弟扩展）+ 精排 —— 与生产结构一致
+    if variant in ("sibling", "hyde", "sibling_hyde"):
+        pairs = [(q, None)] + [(s, None) for s in sub_qs]
+        if "hyde" in variant and hyde and hyde != q:
+            pairs.append((hyde, None))
+        fused = await _multi_query_search(store, pairs, top_k=20)
+        if not fused and (sub_qs or hyde):
+            fused = await _hybrid_search(store, q, None, top_k=20)
+        if "sibling" in variant and settings.sibling_expand:
+            fused = await _expand_with_siblings(fused)
+        return _apply_rerank(q, fused)
+
     if variant == "orig_multi":
         # B1 假设：主查询用用户原话（A/B 实测改写当主路有害），变体承担语义扩展
         pairs = [(q, None)] + [(s, None) for s in sub_qs]
@@ -79,6 +100,9 @@ async def search_variant(store, it, cache, settings, variant: str) -> list[dict]
         if not fused and sub_qs:
             fused = await _hybrid_search(store, q, None, top_k=20)
         return _apply_rerank(q, fused)
+
+    # legacy 变体（改写当主路系列，保留供对照）
+    dense_q, sparse_q = _build_enhanced_queries(p, q)
     if variant == "multi_main":  # 仅主查询增强（无 sub_queries）
         fused = await _hybrid_search(store, dense_q, sparse_q if dense_q != q else None, top_k=20)
     else:
@@ -110,7 +134,7 @@ async def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--variants",
-        default="raw,orig_multi,multi,multi_rerank",
+        default="raw,orig_multi,sibling,hyde,sibling_hyde",
         help="逗号分隔变体列表（默认 raw,orig_multi,multi,multi_rerank）",
     )
     args = parser.parse_args()
