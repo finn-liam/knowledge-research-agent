@@ -20,7 +20,7 @@
 ## 📐 架构
 
 <div align="center">
-  <img src="docs/Diagram.png" width="55%" alt="架构图" />
+  <img src="docs/Diagram.png" width="100%" alt="架构图" />
 </div>
 
 ```

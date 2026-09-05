@@ -22,7 +22,7 @@
 ## 📐 Architecture
 
 <div align="center">
-  <img src="docs/Diagram.png" width="55%" alt="Architecture" />
+  <img src="docs/Diagram.png" width="100%" alt="Architecture" />
 </div>
 
 ```
