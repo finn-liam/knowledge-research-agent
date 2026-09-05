@@ -158,6 +158,9 @@ Every component below is justified by a measured experiment on the 100-item data
 | rewritten-query-as-main only | 0.135 | 0.398 | LLM rewrite alone: **−0.080** — harmful |
 | rewrite + sub-queries (no rerank) | 0.160 | 0.467 | multi-query recovers the loss |
 | **original-as-main + sub-queries + rerank** | **0.171** | **0.497** (K12: **0.523** vs 0.520) | adopted — main query keeps the user's words |
+| **+ sibling expansion (prod)** | **0.226** | **0.647** (K12: **0.725**) | **biggest single win (+0.20)** — neighbors of hits join candidates |
+| + HyDE variant alone | 0.174 | 0.503 (K12: 0.533) | marginal alone |
+| sibling + HyDE | 0.218 | 0.618 (K12: 0.700) | HyDE dilutes the window — off by default |
 | + per-doc cap of 3 | 0.154 | 0.410 | quota before rerank: **−0.087** — removed |
 | rewrite + sub-queries + rerank (prev prod) | 0.171 | **0.497** | previous combo, superseded |
 
@@ -173,8 +176,8 @@ On this Chinese corpus, the learned sparse path of bge-m3 beats classic BM25 by 
 
 Two structural findings drove the design:
 
-- **37.5% of labeled chunks never appear in dense top-50** (pure embedding blind spots, e.g. code-detail questions) — this is why query variants exist at all, and why recall work continues (HyDE next).
-- The eval retrieval layer runs **the exact production path** (enhancement → multi-query → rerank, window = `MAX_GRADE_SOURCES`), so numbers reflect what users get, not a simplified proxy.
+- **37.5% of labeled chunks never appear in dense top-50** (pure embedding blind spots, e.g. code-detail questions) — this is why query variants exist, and **sibling expansion** (hits carry their ±1 neighbors) is what finally lifted ID recall **0.478 → 0.725** across the campaign.
+- The eval retrieval layer runs **the exact production path** (planner → multi-query → sibling expansion → rerank, window = `MAX_GRADE_SOURCES`), so numbers reflect what users get, not a simplified proxy.
 
 ## 🗂 Project Structure
 
