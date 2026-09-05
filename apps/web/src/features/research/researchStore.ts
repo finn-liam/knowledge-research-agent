@@ -165,6 +165,9 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
 
   hydrate: (d) => {
     const running = d.status === "running";
+    // 失败任务恢复真实错误原因（后端 on_error 持久化在 stats_json.error）
+    const statsAny = (d.stats ?? {}) as Record<string, unknown>;
+    const savedError = typeof statsAny.error === "string" ? statsAny.error : null;
     set({
       taskId: d.id,
       title: d.title,
@@ -177,7 +180,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       reportBuffer: d.report?.markdown ?? "",
       reportTitle: d.report?.title ?? "",
       stats: d.stats,
-      error: null,
+      error: savedError,
       selectedRefNo: null,
       messages: d.messages,
       reports: d.reports ?? [],

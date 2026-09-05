@@ -29,6 +29,18 @@ from app.db.session import SessionLocal
 from app.integrations.arxiv_client import search_papers
 from app.integrations.web_search import search_web
 from app.llm.gateway import get_llm
+
+
+def _log(msg: str) -> None:
+    """进程诊断日志：stdout 管道失效（如日志文件被轮转删除）时静默。
+
+    绝不让日志抛错打断业务——曾经 print 在 except 块里抛 OSError(Errno 22)
+    把"本该被兜住的 Qdrant 故障"升级成整个任务失败。
+    """
+    try:
+        print(msg, flush=True)
+    except Exception:
+        pass
 from app.models.research import (
     STEP_DEFS,
     Citation,
@@ -515,7 +527,7 @@ async def kb_retriever_node(state: ResearchState) -> dict:
         import traceback
 
         traceback.print_exc()
-        print(f"[kra][kb] 检索异常: {type(exc).__name__}: {str(exc)[:200]}", flush=True)
+        _log(f"[kra][kb] 检索异常: {type(exc).__name__}: {str(exc)[:200]}")
         kb_status = "unreachable"
 
     for i, s in enumerate(results, start=1):
@@ -1007,5 +1019,7 @@ async def on_error(task_id: str, message: str) -> None:
         if task:
             task.status = "failed"
             task.completed_at = _now()
+            # 持久化错误原因：前端刷新后 hydrate 能显示真实原因（而非"未知错误"）
+            task.stats_json = {**(task.stats_json or {}), "error": message}
             await db.commit()
     EVENT_BUS.emit(task_id, "error", {"message": message})

@@ -58,7 +58,10 @@ class LLMGateway:
                 return
             except Exception as exc:
                 # 真实调用失败/超时 → 降级摘录补全（保证链路不中断），并记录原因
-                print(f"[kra][llm] 真实 LLM 流式降级: {type(exc).__name__}: {str(exc)[:200]}", flush=True)
+                try:
+                    print(f"[kra][llm] 真实 LLM 流式降级: {type(exc).__name__}: {str(exc)[:200]}", flush=True)
+                except Exception:
+                    pass
         for piece in _chunk_text(mock_text):
             yield piece
             await asyncio.sleep(0.015)
