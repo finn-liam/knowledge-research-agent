@@ -11,6 +11,11 @@ import type {
 
 const BASE = "/api/v1";
 
+// SSE 直连后端：Next dev 代理会缓冲 SSE 流（实测 317 个 token 全部在 26.8s 时
+// 一簇到达、且丢事件导致报告缺字）。NEXT_PUBLIC_SSE_BASE 留空则同源走代理
+// （生产 standalone），开发环境在 .env.development 里直连 127.0.0.1:8000。
+const SSE_BASE = process.env.NEXT_PUBLIC_SSE_BASE ?? "";
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const resp = await fetch(`${BASE}${path}`, {
     headers: { "Content-Type": "application/json" },
@@ -45,7 +50,7 @@ export const api = {
 
   exportUrl: (taskId: string) => `${BASE}/research/${taskId}/export`,
 
-  streamUrl: (taskId: string) => `${BASE}/research/${taskId}/stream`,
+  streamUrl: (taskId: string) => `${SSE_BASE}${BASE}/research/${taskId}/stream`,
 
   // ---------- 知识库 ----------
   uploadDocuments: async (files: File[]) => {
