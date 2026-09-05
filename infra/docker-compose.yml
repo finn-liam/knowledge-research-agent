@@ -21,6 +21,7 @@ services:
 
   qdrant:
     image: qdrant/qdrant:latest
+    restart: always  # 容器/引擎重启后自动拉起（本机 Docker Desktop 曾多次异常退出）
     ports: ["6333:6333"]
     volumes: [qdrant_data:/qdrant/storage]
 
