@@ -132,13 +132,20 @@ async def stream_research(task_id: str):
 
     async def event_gen():
         queue = EVENT_BUS.subscribe(task_id)
-        # 重连重放：过滤 report_token（报告全文由前端 onopen 时拉取详情，避免重复/拼接错乱）
-        history = [p for p in EVENT_BUS.history(task_id) if p["event"] != "report_token"]
+        # 重放协议：历史全量重放（含 report_token），先发 report_reset 让前端清空
+        # 报告缓冲后按序重建——重连/刷新后文本无破洞；重放结束发 replay_end。
+        # （旧方案重放跳过 report_token + 前端快照锁，导致重连前 token 永久缺失、
+        #   流式文本破洞只能靠刷新）
+        history = list(EVENT_BUS.history(task_id))
+        if any(p["event"] == "report_token" for p in history):
+            yield _sse({"event": "report_reset", "data": {}})
         seen = {id(p) for p in history}  # 同一 payload 对象引用去重，防重放竞态
         for payload in history:
             yield _sse(payload)
             if payload["event"] == "stream_end":
+                yield _sse({"event": "replay_end", "data": {}})
                 return
+        yield _sse({"event": "replay_end", "data": {}})
         while True:
             try:
                 payload = await asyncio.wait_for(queue.get(), timeout=30.0)

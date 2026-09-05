@@ -39,6 +39,7 @@ interface ResearchState {
   messages: ChatMessage[]; // 多轮对话历史
   reports: ReportInfo[]; // 多轮报告历史（version 升序）
   snapshotLocked: boolean; // 新一轮开始后禁止 onopen 快照覆盖报告
+  replaying: boolean; // SSE 重放中（重连/刷新后的历史回放，抑制时间线重复与报告重复追加）
   timeline: TimelineEntry[]; // 研究过程时间线（C1：Agent 思考直播，最新在底部）
 
   hydrate: (d: TaskDetail) => void;
@@ -161,6 +162,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   messages: [],
   reports: [],
   snapshotLocked: false,
+  replaying: false,
   timeline: [],
 
   hydrate: (d) => {
@@ -208,14 +210,17 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       selectedRefNo: null,
       messages,
       snapshotLocked: true, // 本轮报告只能来自 SSE 流式，禁止快照覆盖
+      replaying: false,
       timeline: [{ id: ++timelineSeq, ts: Date.now(), kind: "router", text: "新问题已提交，开始研究" }],
     });
   },
 
   applyEvent: (event, data) => {
-    // 时间线：先入列（独立于下方状态切换，任何事件都不阻塞）
-    const tl = timelineText(event, data);
-    if (tl) set({ timeline: pushTimeline(get().timeline, tl.kind, tl.text) });
+    // 时间线：重放期间（重连/刷新后的历史回放）不入列，避免重复条目
+    if (!get().replaying) {
+      const tl = timelineText(event, data);
+      if (tl) set({ timeline: pushTimeline(get().timeline, tl.kind, tl.text) });
+    }
 
     const state = get();
     switch (event) {
@@ -288,27 +293,42 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
         scheduleFlush(set, get);
         break;
       }
-      case "report_completed": {
-        // 立即刷新剩余累积的 token
-        if (pendingTokens) {
-          set({ reportBuffer: state.reportBuffer + pendingTokens });
-          pendingTokens = "";
+      case "report_reset": {
+        // 重放协议：历史含 report_token，先清空缓冲再按序重建（重连/刷新后文本无破洞）
+        if (get().phase === "streaming") {
+          clearFlush();
+          set({ reportBuffer: "" });
         }
+        break;
+      }
+      case "replay_end": {
+        if (get().replaying) set({ replaying: false });
+        break;
+      }
+      case "report_completed": {
+        // 立即刷新剩余累积的 token（必须取最新 buffer——顶部捕获的 state 是旧快照，
+        // 旧实现导致入库报告缺最后一段 token）
+        const freshBuffer = get().reportBuffer + pendingTokens;
+        pendingTokens = "";
         clearFlush();
-        // 本轮报告完成：追加到历史 reports（version 递增），解锁快照
+        const rid = Number(data.report_id ?? 0);
+        // 重放去重：同一报告（report_id 相同）不重复追加版本
+        const already = rid > 0 && state.reports.some((r) => r.id === rid);
         const newReport: ReportInfo = {
-          id: Number(data.report_id ?? 0),
+          id: rid,
           title: String(data.title ?? ""),
           summary: "",
-          markdown: state.reportBuffer,
+          markdown: freshBuffer,
           version: (state.reports.at(-1)?.version ?? 0) + 1,
         };
         set({
           phase: "done",
+          reportBuffer: freshBuffer,
           reportTitle: String(data.title ?? ""),
           stats: (data.stats as RunStats) ?? {},
-          reports: [...state.reports, newReport],
+          reports: already ? state.reports : [...state.reports, newReport],
           snapshotLocked: false,
+          replaying: false,
         });
         break;
       }
@@ -325,10 +345,12 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
 
   selectSource: (refNo) => set({ selectedRefNo: refNo }),
 
-  /** SSE 快照：force=true 全量替换（断线兜底）；默认保守（本轮开始后不覆盖流式报告） */
+  /** SSE 快照：force=true 全量替换（断线兜底 + 完成时校准）；默认保守（本轮开始后不覆盖流式报告） */
   applySnapshot: (d, force = false) => {
     const state = get();
-    if (state.phase !== "streaming") return;
+    // force 校准允许在 done 阶段执行：report_completed 已把 phase 切成 done，
+    // 异步校准返回时若仍拦在 streaming 守卫外，"完成校准"永远不会生效
+    if (state.phase !== "streaming" && !force) return;
     const applyReport = force || !state.snapshotLocked;
     set({
       reportBuffer: applyReport && d.report?.markdown ? d.report.markdown : state.reportBuffer,
