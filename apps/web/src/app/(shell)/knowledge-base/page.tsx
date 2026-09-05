@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { api } from "@/lib/api";
 import type { KbDocument } from "@/types";
 
-/** Knowledge Base：企业知识库管理（上传→解析→切片→向量化→检索） */
+/** Knowledge Base：本地知识库管理（上传→解析→切片→向量化→检索） */
 export default function KnowledgeBasePage() {
   const queryClient = useQueryClient();
   const [previewDoc, setPreviewDoc] = useState<KbDocument | null>(null);
@@ -65,7 +65,7 @@ export default function KnowledgeBasePage() {
       <div className="mx-auto max-w-[1000px] px-8 py-8">
         <h1 className="text-xl font-bold">Knowledge Base</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          企业知识库：上传文档后自动完成解析、语义切片与 bge-m3 向量化，研究报告的"查询企业知识库"
+          本地知识库：上传文档后自动完成解析、语义切片与 bge-m3 向量化，研究报告的"查询本地知识库"
           步骤将检索这些真实内部资料
         </p>
 

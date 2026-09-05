@@ -1,4 +1,4 @@
-"""LangGraph 节点：kb_search → report_write（纯企业知识库 RAG）。
+"""LangGraph 节点：kb_search → report_write（纯本地知识库 RAG）。
 
 - 学术检索 / 网页检索 / 知识图谱构建已按需求暂停（不入图）
 - 知识库无命中时明确告知，不编造
@@ -441,10 +441,10 @@ async def kb_retriever_node(state: ResearchState) -> dict:
     # Planner 逐源规划：KB 不在规划内 → 跳过（步骤标记 skipped，前端可见）
     plan = state.get("plan") or ["kb"]
     if "kb" not in plan:
-        await _step(task_id, "kb_search", "查询企业知识库", "skipped")
+        await _step(task_id, "kb_search", "查询本地知识库", "skipped")
         return {"kb_results": []}
 
-    await _step(task_id, "kb_search", "查询企业知识库", "running")
+    await _step(task_id, "kb_search", "查询本地知识库", "running")
 
     # 反思重查最终轮（escalation）：加大检索量 + 放宽阈值
     esc = bool(state.get("escalation"))
@@ -510,7 +510,7 @@ async def kb_retriever_node(state: ResearchState) -> dict:
                             "url": f"kb://doc/{doc_id}#c{h['chunk_index']}",
                             "snippet": (h.get("text") or "")[:300],
                             "type": "enterprise",
-                            "source_label": "企业知识库",
+                            "source_label": "本地知识库",
                             "relevance": round(h.get("relevance", 0.0), 3),
                             "meta": {
                                 "document_id": doc_id,
@@ -566,7 +566,7 @@ async def kb_retriever_node(state: ResearchState) -> dict:
         await _step(task_id, "web_search", "搜索网页信息", "skipped")
 
     await _step(
-        task_id, "kb_search", "查询企业知识库", "done",
+        task_id, "kb_search", "查询本地知识库", "done",
         {"hits": len(results), "kb_status": kb_status,
          "enhanced": enhanced,
          "duration_ms": int((time.time() - started) * 1000)},
@@ -827,7 +827,7 @@ def _excerpt_report(sources: list[dict], lang: str) -> str:
         for s in sources:
             lines.append(f"- {_first_sentence(s['snippet'])} [{s['ref_no']}]")
     else:
-        lines = ["基于企业知识库的要点：", ""]
+        lines = ["基于本地知识库的要点：", ""]
         for s in sources:
             lines.append(f"- {_first_sentence(s['snippet'])} [{s['ref_no']}]")
         lines.append("")
@@ -873,7 +873,7 @@ async def report_writer_node(state: ResearchState) -> dict:
             mock_reply = (
                 "Hello! I'm your enterprise knowledge assistant. How can I help you?"
                 if lang == "en"
-                else "你好！我是企业知识库助手，有什么可以帮您？"
+                else "你好！我是本地知识库助手，有什么可以帮您？"
             )
             parts: list[str] = []
             async for piece in llm.stream_report(chat_prompt, mock_reply):
@@ -886,7 +886,7 @@ async def report_writer_node(state: ResearchState) -> dict:
                       "or try a different question.")
         else:
             report = ("知识库中未找到足够相关的信息。\n\n"
-                      "建议：1) 在 Knowledge Base 页面上传相关企业文档；2) 换一个角度重新提问。")
+                      "建议：1) 在 Knowledge Base 页面上传相关文档；2) 换一个角度重新提问。")
     else:
         context_block = _build_context_block(sources)
         lang_note = (

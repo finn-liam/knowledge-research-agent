@@ -17,7 +17,7 @@ async def source_stats():
     counts = {t: n for t, n in rows}
     return {
         "items": [
-            {"category": "enterprise", "label": "企业内部文档", "count": counts.get("enterprise", 0)},
+            {"category": "enterprise", "label": "本地文档", "count": counts.get("enterprise", 0)},
             {"category": "paper", "label": "学术论文", "count": counts.get("paper", 0)},
             {"category": "web", "label": "网页资源", "count": counts.get("web", 0)},
         ]

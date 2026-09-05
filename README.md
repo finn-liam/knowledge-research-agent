@@ -9,9 +9,9 @@
 [![LangGraph](https://img.shields.io/badge/LangGraph-1.x-orange.svg)](https://www.langchain.com/langgraph)
 [![Qdrant](https://img.shields.io/badge/Qdrant-1.18-ff3f59.svg)](https://qdrant.tech/)
 
-**An enterprise-grade Agentic RAG assistant** — ask one question and the system autonomously performs multi-source retrieval, quality judgment and reflective re-search, then produces a citation-traced research report.
+**A LangGraph-based Agentic RAG knowledge-base assistant with hybrid retrieval, Self-RAG, citation tracing, and automated RAGAS evaluation.** Ask one question and the system autonomously performs multi-source retrieval, quality judgment and reflective re-search, then produces a citation-traced research report.
 
-**企业级 Agentic RAG 知识研究助手** — 输入一个问题，自动完成多源检索、质量判断与反思重查，生成带引用溯源的研究报告（混合检索 · Self-RAG · RAGAS 评估）。
+**基于 LangGraph 的 Agentic RAG 知识库助手，支持混合检索、Self-RAG、引用溯源和 RAGAS 自动评估。**（混合检索 · Self-RAG · RAGAS 评估）
 
 [中文文档](README.zh-CN.md)
 
@@ -116,7 +116,7 @@ npm run dev
 
 Open **http://localhost:5173/** and ask a question.
 
-### 6. (Optional) Upload enterprise documents
+### 6. (Optional) Build your document library
 
 Use the **Knowledge Base** page to upload PDF/DOCX/MD/TXT files (≤100MB each, configurable). They are parsed, chunked and vectorized automatically.
 
@@ -126,7 +126,7 @@ The numbers on the home page are **live aggregations of real data** (not display
 
 | Panel | Scope |
 |---|---|
-| **Sources** | Source fragments actually retrieved across all historical research, grouped by type (enterprise documents / academic papers / web pages); grows after every research |
+| **Sources** | Source fragments actually retrieved across all historical research, grouped by type (local documents / academic papers / web pages); grows after every research |
 | **Research Statistics** | Cumulative metrics: Total Research = research count; Knowledge Sources = total retrieved sources; Documents Hit = cumulative documents matched; Accuracy Rate = historical average relevance |
 
 ## 📈 Evaluation

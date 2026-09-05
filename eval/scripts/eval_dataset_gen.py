@@ -19,7 +19,7 @@ from app.llm.gateway import get_llm  # noqa: E402
 from app.models.research import Document, DocumentChunk  # noqa: E402
 
 # 每文档目标题数（按文档名前缀分配，合计≈总条数）
-FACT_PROMPT = """你是企业知识库数据标注员。请基于以下文档片段生成一条知识问答数据。
+FACT_PROMPT = """你是本地知识库数据标注员。请基于以下文档片段生成一条知识问答数据。
 
 【片段内容】
 {chunk_text}
@@ -31,7 +31,7 @@ FACT_PROMPT = """你是企业知识库数据标注员。请基于以下文档片
 }}
 """
 
-CHART_PROMPT = """你是企业知识库数据标注员。以下片段包含对文档中【图片/图表/界面截图】的描述（OCR 或 VLM 生成）。
+CHART_PROMPT = """你是本地知识库数据标注员。以下片段包含对文档中【图片/图表/界面截图】的描述（OCR 或 VLM 生成）。
 
 【片段内容】
 {chunk_text}
@@ -43,7 +43,7 @@ CHART_PROMPT = """你是企业知识库数据标注员。以下片段包含对�
 }}
 """
 
-ANALYSIS_PROMPT = """你是企业知识库数据标注员。以下是一份文档的【章节级完整内容】（含多个段落与小节）。
+ANALYSIS_PROMPT = """你是本地知识库数据标注员。以下是一份文档的【章节级完整内容】（含多个段落与小节）。
 
 【章节内容】
 {chunk_text}

@@ -13,7 +13,7 @@ def utcnow() -> datetime:
 
 # 与效果图2 的 5 张步骤卡片一一对应
 STEP_DEFS: list[tuple[str, str]] = [
-    ("kb_search", "查询企业知识库"),
+    ("kb_search", "查询本地知识库"),
     ("paper_search", "检索学术论文"),
     ("web_search", "搜索网页信息"),
     ("graph_build", "建立知识关系图谱"),
@@ -67,7 +67,7 @@ class Source(Base):
     url: Mapped[str] = mapped_column(sa.String(600), default="")
     snippet: Mapped[str] = mapped_column(sa.Text, default="")
     relevance: Mapped[float] = mapped_column(sa.Float, default=0.0)  # 0~1
-    source_label: Mapped[str] = mapped_column(sa.String(60), default="")  # 企业知识库/学术论文/网页
+    source_label: Mapped[str] = mapped_column(sa.String(60), default="")  # 本地知识库/学术论文/网页
     meta_json: Mapped[dict] = mapped_column(sa.JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True), default=utcnow)
 
@@ -109,7 +109,7 @@ class Message(Base):
 
 
 class Document(Base):
-    """企业知识库文档：上传 → 解析 → 切片 → 向量化 → 检索。"""
+    """本地知识库文档：上传 → 解析 → 切片 → 向量化 → 检索。"""
 
     __tablename__ = "documents"
 

@@ -9,7 +9,7 @@
 [![LangGraph](https://img.shields.io/badge/LangGraph-1.x-orange.svg)](https://www.langchain.com/langgraph)
 [![Qdrant](https://img.shields.io/badge/Qdrant-1.18-ff3f59.svg)](https://qdrant.tech/)
 
-**企业级 Agentic RAG 知识研究助手**：输入一个问题，系统自动完成多源检索、质量判断与反思重查，生成带引用溯源的研究报告。
+**基于 LangGraph 的 Agentic RAG 知识库助手，支持混合检索、Self-RAG、引用溯源和 RAGAS 自动评估。** 输入一个问题，系统自动完成多源检索、质量判断与反思重查，生成带引用溯源的研究报告。
 
 [English](README.md)
 
@@ -25,7 +25,7 @@
 
 ```
 用户提问 → 意图路由（闲聊 | 知识问题）
-    → 三路并行检索（企业知识库 ∥ arXiv 论文 ∥ Tavily 网页）
+    → 三路并行检索（本地知识库 ∥ arXiv 论文 ∥ Tavily 网页）
     → 融合 + RRF + bge-reranker 精排
     → Retrieval Grader 打分 ── 低质量 → 改写重查（≤2 轮）
     → LLM 生成（DeepSeek 流式，强制 [n] 引用）
@@ -39,7 +39,7 @@
 | **Agentic RAG（Self-RAG）** | LangGraph 低层 StateGraph 手写 7 节点：并行检索 + Grader 判断 + 改写重查循环 |
 | **混合检索** | bge-m3 一次前向产出 dense（1024 维）+ sparse 双表示 → 双路召回 + RRF(k=60) + bge-reranker 精排 |
 | **查询增强** | LLM 改写 + 关键词扩展；dense/sparse 双路分离应用；增强无命中自动回退原问题 |
-| **多源检索** | 企业知识库（Qdrant）+ arXiv 论文 + Tavily 网页 三路并行 |
+| **多源检索** | 本地知识库（Qdrant）+ arXiv 论文 + Tavily 网页 三路并行 |
 | **PDF 智能解析** | 类型分流（原生/扫描/图文混排）→ 版面还原（阅读顺序/页眉页脚/标题/页码）→ RapidOCR 图片识别 + VLM 图表描述（OpenAI 兼容，默认 mimo-v2.5） |
 | **Parent-Child 切片** | child（650 token）精准检索 + parent（章节级 2000 token）完整上下文 |
 | **引用溯源** | 每条论断强制 [n] 标注、页码定位、片段全文核对（/kb/chunk 端点） |
@@ -114,7 +114,7 @@ npm run dev
 
 打开 **http://localhost:5173/**，在首页提问即可。
 
-### 6. （可选）上传企业文档
+### 6. （可选）上传你的文档
 
 左侧 **Knowledge Base** 页上传 PDF/DOCX/MD/TXT（≤100MB/个，默认值可调），系统自动完成解析 → 切片 → 向量化。
 
@@ -124,7 +124,7 @@ npm run dev
 
 | 面板 | 口径 |
 |---|---|
-| **Sources** | 历史所有研究**真实检索到**的来源片段，按类型聚合计数（企业内部文档 / 学术论文 / 网页资源）；每次研究完成后自动增长 |
+| **Sources** | 历史所有研究**真实检索到**的来源片段，按类型聚合计数（本地文档 / 学术论文 / 网页资源）；每次研究完成后自动增长 |
 | **Research Statistics** | 累计指标：Total Research=历史研究总次数；Knowledge Sources=累计检索来源总数；Documents Hit=累计命中文档总数；Accuracy Rate=历史平均相关度 |
 
 ## 📈 评估体系

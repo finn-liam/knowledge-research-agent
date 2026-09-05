@@ -12,7 +12,7 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-DESCRIBE_PROMPT = """你是企业文档图表分析师。请描述这张图片的内容，用于知识检索：
+DESCRIBE_PROMPT = """你是文档图表分析师。请描述这张图片的内容，用于知识检索：
 - 若是图表：提取标题、坐标轴/图例含义、数据趋势、关键结论
 - 若是架构图/流程图：提取节点、连接关系、整体结构
 - 若是截图/示意图：提取图中文字要点与布局

@@ -1,6 +1,6 @@
 """LangGraph 各节点的 Prompt 模板（真实 LLM 模式使用）。"""
 
-ROUTER_PROMPT = """你是一名企业知识库助手的检索规划器（Planner）。判断用户这句话是否需要检索资料，以及需要哪些来源。
+ROUTER_PROMPT = """你是一名本地知识库助手的检索规划器（Planner）。判断用户这句话是否需要检索资料，以及需要哪些来源。
 
 用户输入：{query}
 
@@ -10,10 +10,10 @@ ROUTER_PROMPT = """你是一名企业知识库助手的检索规划器（Planner
 判断规则：
 - "chat"：寒暄、闲聊、问候、感谢、告别、自我介绍类（如"你好""谢谢""你是谁"），不需要检索，三个来源全 false
 - "knowledge"：需要检索资料回答的知识问题，逐源规划：
-  - "kb"：企业知识库。默认 true（内部制度、流程、项目细节、文档内容、代码说明，或不确定该问哪时）
+  - "kb"：本地知识库。默认 true（内部制度、流程、项目细节、文档内容、代码说明，或不确定该问哪时）
   - "paper"：用户明确提到 论文/学术/arXiv/研究/学术进展 时 true
-  - "web"：用户明确提到 网页/网上/最新/新闻/官网/业界动态 时 true；纯公网时事且与企业内部无关时 kb 可为 false
-  - 对比企业内部与外部信息 → 三个全 true
+  - "web"：用户明确提到 网页/网上/最新/新闻/官网/业界动态 时 true；纯公网时事且与本地资料无关时 kb 可为 false
+  - 对比本地资料与外部信息 → 三个全 true
 示例：
 "Python是什么" → {{"type":"knowledge","kb":true,"paper":false,"web":false}}
 "OpenAI最新发布了什么模型" → {{"type":"knowledge","kb":false,"paper":false,"web":true}}
@@ -21,7 +21,7 @@ ROUTER_PROMPT = """你是一名企业知识库助手的检索规划器（Planner
 "对比我们的方案和学术界的最新做法" → {{"type":"knowledge","kb":true,"paper":true,"web":true}}
 """
 
-CHAT_PROMPT = """你是一名企业知识库助手。用户对你说：{query}
+CHAT_PROMPT = """你是一名本地知识库助手。用户对你说：{query}
 
 这是一句寒暄/闲聊。请直接回复一句简短友好的话（1-2 句话，不要长篇大论，不要检索资料，不要使用引用标签）。
 """
@@ -42,7 +42,7 @@ QUERY_PROCESS_PROMPT = """你是一名检索优化助手。用户的问题：
 - hyde 是 HyDE 检索变体：写成"看起来像文档里会出现的答案段落"，而不是问题本身。
 """
 
-REPORT_PROMPT = """你是一名企业知识库问答助手。请直接回答用户问题「{query}」。
+REPORT_PROMPT = """你是一名本地知识库问答助手。请直接回答用户问题「{query}」。
 
 【知识库片段】以下片段是回答问题的唯一可用依据：
 {context_block}
@@ -95,7 +95,7 @@ VERIFY_PROMPT = """你是一名事实核查员。用户问题：{query}
 要求：faithfulness 低于 0.7 时 pass=false；unsupported_claims 列出无法从片段佐证的论断。
 """
 
-CHART_REPORT_PROMPT = """你是一名企业文档图表分析师。用户问题：{query}
+CHART_REPORT_PROMPT = """你是一名文档图表分析师。用户问题：{query}
 
 【图片描述】以下是对文档中图片/图表内容的描述（OCR 或 VLM 生成，是图中内容的唯一依据）：
 {context_block}

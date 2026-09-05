@@ -1,4 +1,4 @@
-"""Qdrant 向量存储：企业知识库 chunk 的写入/检索/删除（混合检索：dense + sparse）。
+"""Qdrant 向量存储：本地知识库 chunk 的写入/检索/删除（混合检索：dense + sparse）。
 
 Collection: kb_chunks
   dense  : bge-m3 1024 维稠密向量（Cosine）

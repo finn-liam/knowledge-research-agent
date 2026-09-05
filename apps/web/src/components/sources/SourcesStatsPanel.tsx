@@ -19,7 +19,7 @@ export function SourcesStatsPanel({ items }: { items: SourceStatItem[] }) {
                 </span>
               </TooltipTrigger>
               <TooltipContent className="max-w-[260px]">
-                统计自历史所有研究**真实检索到**的来源片段，按类型聚合计数：企业内部文档、学术论文、网页资源。每次研究完成后自动增长。
+                统计自历史所有研究**真实检索到**的来源片段，按类型聚合计数：本地文档、学术论文、网页资源。每次研究完成后自动增长。
               </TooltipContent>
             </Tooltip>
           </div>

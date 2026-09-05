@@ -242,7 +242,7 @@ def build_ragas_samples(samples: list[dict], ctx_key: str = "retrieved_contexts"
 
 
 def _is_enterprise_ctx(sample: dict, idx: int) -> bool:
-    """按来源类型判断上下文是否为企业知识库（context_types 与 contexts 对齐）。"""
+    """按来源类型判断上下文是否为本地知识库（context_types 与 contexts 对齐）。"""
     types = sample.get("context_types") or []
     if idx < len(types):
         return types[idx] == "enterprise"

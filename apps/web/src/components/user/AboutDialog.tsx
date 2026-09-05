@@ -25,7 +25,7 @@ export function AboutDialog({
             </span>
             Knowledge Research Agent
           </DialogTitle>
-          <DialogDescription>企业级 AI Research Assistant</DialogDescription>
+          <DialogDescription>基于 LangGraph 的 Agentic RAG 知识库助手，支持混合检索、Self-RAG、引用溯源和 RAGAS 自动评估。</DialogDescription>
         </DialogHeader>
         <div className="space-y-3 text-sm">
           <div className="flex items-center justify-between">
@@ -46,7 +46,7 @@ export function AboutDialog({
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">数据源</span>
-            <span>企业知识库 · arXiv · Tavily</span>
+            <span>本地知识库 · arXiv · Tavily</span>
           </div>
         </div>
       </DialogContent>

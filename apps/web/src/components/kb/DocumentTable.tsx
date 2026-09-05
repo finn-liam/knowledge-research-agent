@@ -78,7 +78,7 @@ export function DocumentTable({
           {documents.length === 0 && (
             <tr>
               <td colSpan={7} className="px-4 py-12 text-center text-sm text-muted-foreground">
-                知识库为空，上传第一批文档开始构建企业检索资产
+                知识库为空，上传第一批文档，开始构建你的检索资料库
               </td>
             </tr>
           )}

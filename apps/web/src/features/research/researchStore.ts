@@ -13,7 +13,7 @@ import type {
 
 /** 与后端 STEP_DEFS 对齐（效果图2 顺序）：kb/论文/网页/报告启用，知识图谱已暂停 */
 const DEFAULT_STEPS: StepInfo[] = [
-  { step_key: "kb_search", label: "查询企业知识库", order_index: 0, status: "pending", meta: {} },
+  { step_key: "kb_search", label: "查询本地知识库", order_index: 0, status: "pending", meta: {} },
   { step_key: "paper_search", label: "检索学术论文", order_index: 1, status: "pending", meta: {} },
   { step_key: "web_search", label: "搜索网页信息", order_index: 2, status: "pending", meta: {} },
   { step_key: "graph_build", label: "建立知识关系图谱", order_index: 3, status: "paused", meta: {} },
@@ -69,7 +69,7 @@ function timelineText(event: string, data: Record<string, unknown>): { kind: Tim
       if (t === "chat") return { kind: "router", text: "意图识别：闲聊，跳过检索直接回答" };
       return mode === "multi"
         ? { kind: "router", text: "意图识别：知识问题，三路全开（知识库 ∥ 论文 ∥ 网页）" }
-        : { kind: "router", text: "意图识别：知识问题，先查企业知识库（渐进式）" };
+        : { kind: "router", text: "意图识别：知识问题，先查本地知识库（渐进式）" };
     }
     case "step_started":
       return { kind: "step_started", text: `${label || "步骤"} · 开始` };

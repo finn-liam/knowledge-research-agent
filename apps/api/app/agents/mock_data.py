@@ -87,18 +87,18 @@ def mock_enterprise_sources(topic: str) -> list[dict]:
         {
             "title": f"{topic}内部技术文档",
             "url": "kb://internal/tech-doc",
-            "snippet": f"企业内部沉淀的{topic}技术选型、架构设计与实践总结，覆盖核心链路的落地经验。",
+            "snippet": f"个人文档库中沉淀的{topic}技术选型、架构设计与实践总结，覆盖核心链路的落地经验。",
             "type": "enterprise",
-            "source_label": "企业知识库",
+            "source_label": "本地知识库",
             "relevance": 0.95,
             "meta": {"simulated": True},
         },
         {
             "title": f"{topic}内部研究报告",
             "url": "kb://internal/research-report",
-            "snippet": f"企业研究院出品的{topic}年度调研报告，包含竞品分析与技术雷达评估。",
+            "snippet": f"研究机构出品的{topic}年度调研报告，包含竞品分析与技术雷达评估。",
             "type": "enterprise",
-            "source_label": "企业知识库",
+            "source_label": "本地知识库",
             "relevance": 0.94,
             "meta": {"simulated": True},
         },
@@ -214,9 +214,9 @@ def build_mock_report(topic: str, sources: list[dict]) -> str:
             ("评估体系缺失", "缺少公认的行业基准与度量标准，效果评估依赖场景化验证。", [9]),
         ]
         summary_core = ("AI Agent 技术正处于快速发展阶段，未来将在自主性、泛化能力、协作能力和"
-                        "行业应用深度等方面取得突破性进展。本报告基于企业知识库、学术论文和网络信息"
+                        "行业应用深度等方面取得突破性进展。本报告基于本地知识库、学术论文和网络信息"
                         "的综合分析，识别了关键趋势和发展机遇。")
-        advice = ("建议企业从单点场景切入，优先落地人机协同的半自主 Agent，同步建设知识底座与评测体系，"
+        advice = ("建议从单点场景切入，优先落地人机协同的半自主 Agent，同步建设知识底座与评测体系，"
                   "逐步向多 Agent 协作演进，把握 2-3 年的技术窗口期。")
         advice_cites = [1, 4, 8]
     else:
@@ -236,7 +236,7 @@ def build_mock_report(topic: str, sources: list[dict]) -> str:
         ]
         drivers = [
             ("基础研究与论文产出", "学术界持续产出高质量成果，为产业落地提供源头供给。", [1]),
-            ("开源生态繁荣", "开源项目降低企业采用门槛，加速技术扩散。", [5]),
+            ("开源生态繁荣", "开源项目降低应用门槛，加速技术扩散。", [5]),
             ("政策与资本加持", "产业政策与资本市场共同推动投入强度提升。", [8]),
             ("人才与工程积累", "工程人才密度提升，最佳实践快速沉淀。", [6]),
         ]
@@ -246,9 +246,9 @@ def build_mock_report(topic: str, sources: list[dict]) -> str:
             ("同质化竞争", "热门赛道拥挤，差异化定位与场景深耕成为关键。", [9]),
         ]
         summary_core = (f"{topic}正处于快速发展阶段，技术突破、生态成熟与行业需求形成共振。"
-                        f"本报告基于企业知识库、学术论文和网络信息的综合分析，"
+                        f"本报告基于本地知识库、学术论文和网络信息的综合分析，"
                         f"识别了{topic}的关键趋势和发展机遇。")
-        advice = (f"建议企业围绕{topic}建立技术雷达机制，优先在高价值场景开展试点，"
+        advice = (f"建议围绕{topic}建立技术雷达机制，优先在高价值场景开展试点，"
                   f"同步储备核心人才与数据资产，分阶段推进规模化落地。")
         advice_cites = [1, 4, 8]
 

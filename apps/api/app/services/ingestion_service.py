@@ -1,4 +1,4 @@
-"""企业知识库摄入管线：解析 → 切片 → bge-m3 向量化 → Qdrant upsert → 状态机。
+"""本地知识库摄入管线：解析 → 切片 → bge-m3 向量化 → Qdrant upsert → 状态机。
 
 状态流转: pending → parsing → embedding → indexed / failed(error_msg)
 以 FastAPI BackgroundTasks 异步执行，单文档失败不影响其他。
