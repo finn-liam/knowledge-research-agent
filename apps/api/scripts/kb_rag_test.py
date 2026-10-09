@@ -7,7 +7,7 @@ import time
 
 import httpx
 
-BASE = os.environ.get("KRA_BASE", "http://127.0.0.1:8000")
+BASE = os.environ.get("KRA_BASE", "http://127.0.0.1:8900")
 QUERY = "企业知识管理平台的 RAG 检索架构与切片策略"
 
 with httpx.Client(base_url=BASE, timeout=30.0) as client:

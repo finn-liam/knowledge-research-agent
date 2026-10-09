@@ -101,7 +101,7 @@ VLM_API_KEY=             # 图表描述（留空则跳过 VLM 描述）
 ```bash
 cd apps/api
 python -m pip install -r requirements.txt
-python -m uvicorn app.main:app --port 8000
+python -m uvicorn app.main:app --port 8900
 ```
 
 ### 5. 启动前端

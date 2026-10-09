@@ -5,7 +5,7 @@ import time
 
 import httpx
 
-BASE = "http://127.0.0.1:8000"
+BASE = "http://127.0.0.1:8900"
 QUERIES = [
     "企业知识管理平台的 RAG 检索架构与切片策略",
     "量子计算的最新突破是什么",

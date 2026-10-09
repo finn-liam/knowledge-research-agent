@@ -73,7 +73,7 @@ class Settings(BaseSettings):
 
     # 服务
     api_host: str = "0.0.0.0"
-    api_port: int = 8000
+    api_port: int = 8900
     cors_origins: str = "http://localhost:5173"
 
     # 评估裁判 LLM（仅 eval_run.py 的 ragas 评分使用，与被测系统解耦）。

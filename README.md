@@ -103,7 +103,7 @@ VLM_API_KEY=             # Chart description (leave empty → skip VLM)
 ```bash
 cd apps/api
 python -m pip install -r requirements.txt
-python -m uvicorn app.main:app --port 8000
+python -m uvicorn app.main:app --port 8900
 ```
 
 ### 5. Start the frontend

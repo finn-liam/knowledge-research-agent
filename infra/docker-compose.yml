@@ -60,7 +60,7 @@ services:
       TAVILY_API_KEY: ${TAVILY_API_KEY:-}
       HF_HOME: /models
       HF_ENDPOINT: https://hf-mirror.com
-    ports: ["8000:8000"]
+    ports: ["8900:8000"]
     volumes: [../models:/models]
     depends_on:
       postgres: { condition: service_healthy }

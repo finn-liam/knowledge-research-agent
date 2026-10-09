@@ -12,7 +12,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
-# 容器内默认指向 compose 网络中的 api 服务（本地裸跑默认 127.0.0.1:8000）
+# 容器内默认指向 compose 网络中的 api 服务（本地裸跑默认 127.0.0.1:8900）
 ENV API_PROXY_TARGET=http://api:8000
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static

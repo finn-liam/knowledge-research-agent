@@ -5,7 +5,7 @@ import time
 
 import httpx
 
-BASE = "http://127.0.0.1:8000"
+BASE = "http://127.0.0.1:8900"
 ROUNDS = [
     "企业知识管理平台的 RAG 检索架构",
     "切片策略是什么",

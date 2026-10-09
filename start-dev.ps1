@@ -1,6 +1,6 @@
 # =====================================================================
 # Knowledge Research Agent - one-click dev startup
-# Starts (if not already running): Qdrant -> API (8000) -> Web (5173)
+# Starts (if not already running): Qdrant -> API (8900) -> Web (5173)
 # Usage:
 #   Double-click start-dev.bat
 #   or:  powershell -NoProfile -ExecutionPolicy Bypass -File start-dev.ps1
@@ -12,6 +12,11 @@ $Root    = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ApiDir  = Join-Path $Root "apps\api"
 $WebDir  = Join-Path $Root "apps\web"
 $InfraDir = Join-Path $Root "infra"
+
+# API port: 8900 avoids the collision-prone defaults (8000 uvicorn/Django,
+# 8080 generic, 5000 Flask, 8888 Jupyter). Keep in sync with apps/api/.env
+# (API_PORT) and apps/web/next.config.ts (API_PROXY_TARGET fallback).
+$ApiPort = 8900
 
 function Write-Step([string]$m) { Write-Host "==> $m" -ForegroundColor Cyan }
 function Write-Ok([string]$m)   { Write-Host "    [OK] $m" -ForegroundColor Green }
@@ -131,13 +136,27 @@ if ($docker) {
 }
 
 # ---------- 4. API backend ----------
-if (Test-PortListening 8000) {
-    Write-Warn "Port 8000 already in use - reusing existing backend"
+if (Test-PortListening $ApiPort) {
+    # Port in use != our backend. Verify the /health fingerprint (llm_mode field)
+    # before reusing: a foreign FastAPI app once held the port and every /api
+    # request 404'd silently.
+    $ours = $false
+    try {
+        $r = Invoke-WebRequest -Uri "http://127.0.0.1:$ApiPort/health" -TimeoutSec 3 -UseBasicParsing
+        $ours = ($r.StatusCode -eq 200) -and ($r.Content -match "llm_mode")
+    } catch { }
+    if ($ours) {
+        Write-Ok "Port $ApiPort in use by this API - reusing existing backend"
+    } else {
+        Write-Host "Port $ApiPort is occupied by ANOTHER program (its /health is not this API)." -ForegroundColor Red
+        Write-Host "Stop it first (find the PID: netstat -ano | findstr :$ApiPort), then rerun." -ForegroundColor Yellow
+        exit 1
+    }
 } else {
-    Write-Step "Starting API backend (port 8000)..."
-    Start-Process -FilePath $python -ArgumentList "-m", "uvicorn", "app.main:app", "--port", "8000" -WorkingDirectory $ApiDir
-    if (Wait-Http "http://127.0.0.1:8000/health" 90) {
-        $health = (Invoke-WebRequest "http://127.0.0.1:8000/health" -UseBasicParsing).Content
+    Write-Step "Starting API backend (port $ApiPort)..."
+    Start-Process -FilePath $python -ArgumentList "-m", "uvicorn", "app.main:app", "--port", "$ApiPort" -WorkingDirectory $ApiDir
+    if (Wait-Http "http://127.0.0.1:$ApiPort/health" 90) {
+        $health = (Invoke-WebRequest "http://127.0.0.1:$ApiPort/health" -UseBasicParsing).Content
         Write-Ok "API ready: $health"
     } else {
         Write-Warn "API not ready after 90s - check the backend window"
@@ -160,6 +179,6 @@ if (Test-PortListening 5173) {
 Write-Host ""
 Write-Host "========== Startup complete ==========" -ForegroundColor Green
 Write-Host "  Web  : http://localhost:5173"
-Write-Host "  API  : http://localhost:8000  (docs: /docs)"
-Write-Host "  Stop : close the corresponding console window"
+Write-Host "  API  : http://localhost:$ApiPort  (docs: /docs)"
+Write-Host "  Stop : double-click stop-dev.bat"
 Write-Host ""

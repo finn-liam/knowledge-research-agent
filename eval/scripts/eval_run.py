@@ -33,7 +33,7 @@ from app.llm.gateway import get_llm  # noqa: E402
 from app.models.research import DocumentChunk  # noqa: E402
 from app.rag.vector_store import get_vector_store  # noqa: E402
 
-BASE = "http://127.0.0.1:8000"
+BASE = "http://127.0.0.1:8900"
 EVAL_DIR = Path(__file__).resolve().parents[1]  # eval/
 
 # 生产 KB 路径的配额（与 nodes.py 对齐：merger 输出 MAX_GRADE_SOURCES=12 给 grader）

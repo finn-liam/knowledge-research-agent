@@ -6,7 +6,7 @@ import time
 
 import httpx
 
-BASE = os.environ.get("KRA_BASE", "http://127.0.0.1:8000")
+BASE = os.environ.get("KRA_BASE", "http://127.0.0.1:8900")
 QUERY = "分析某技术方向未来趋势。"
 
 
