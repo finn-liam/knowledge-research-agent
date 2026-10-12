@@ -21,10 +21,12 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: apps/api/requirements.txt
+          cache-dependency-path: apps/api/requirements.lock
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      # 锁文件安装：requirements.txt 为浮动约束（如 sqlalchemy>=2.0），
+      # 上游发版（2.1 起 greenlet 改为 asyncio extra，默认不再安装）曾隔夜打红 CI
+      - name: Install dependencies (locked)
+        run: pip install -r requirements.lock
 
       - name: Compile check (syntax + imports)
         run: python -m compileall -q app

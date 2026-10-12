@@ -1,7 +1,7 @@
 # 核心依赖（运行后端必需）
 fastapi>=0.115
 uvicorn[standard]>=0.30
-sqlalchemy>=2.0
+sqlalchemy[asyncio]>=2.0
 aiosqlite>=0.20
 pydantic>=2.9
 pydantic-settings>=2.5
