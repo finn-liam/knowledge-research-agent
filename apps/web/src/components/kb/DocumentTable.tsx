@@ -30,7 +30,7 @@ export function DocumentTable({
         </thead>
         <tbody className="divide-y divide-border/60">
           {documents.map((d) => (
-            <tr key={d.id} className="transition-colors hover:bg-accent/30">
+            <tr key={d.id} className="transition-colors duration-300 hover:bg-accent/30">
               <td className="max-w-[320px] truncate px-4 py-2.5 font-medium" title={d.name}>
                 {d.name}
               </td>

@@ -39,28 +39,39 @@ export default function HomePage() {
   return (
     <>
       <ScrollArea className="min-w-0 flex-1">
-        <div className="mx-auto max-w-[860px] px-8 pb-16 pt-14">
-          {/* 欢迎区：排印层级（eyebrow → 44px 主标 → 说明），主色只留给活物 */}
-          <div className="text-center">
-            <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground/70">
+        <div className="mx-auto max-w-[860px] px-8 pb-20 pt-16">
+          {/* 欢迎区：左对齐编辑式排版（eyebrow → 48px 主标 → 说明），逐行遮罩上浮入场 */}
+          <div>
+            <div
+              className="reveal-line text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground/70"
+              style={{ "--d": "0ms" } as React.CSSProperties}
+            >
               Agentic RAG · Multi-Source · Cited
             </div>
-            <h1 className="mt-3 text-[44px] font-bold leading-[1.08] tracking-[-0.02em]">
-              Knowledge Research Agent
+            <h1
+              className="reveal-line mt-3 max-w-[640px] text-[48px] font-bold leading-[1.06] tracking-[-0.025em]"
+              style={{ "--d": "80ms" } as React.CSSProperties}
+            >
+              问一个问题，
+              <br />
+              追踪全部证据。
             </h1>
-            <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-              问一个问题，自动完成多源检索、质量判断与反思重查，给出带引用溯源的研究报告
+            <p
+              className="reveal-line mt-4 max-w-[520px] text-[15px] leading-relaxed text-muted-foreground"
+              style={{ "--d": "160ms" } as React.CSSProperties}
+            >
+              多源检索、质量判断与反思重查自动完成，给出带引用溯源的研究报告
             </p>
           </div>
 
           {/* 研究输入框 */}
-          <div className="mt-8">
+          <div className="reveal-line mt-9" style={{ "--d": "240ms" } as React.CSSProperties}>
             <ResearchComposer variant="hero" onSubmit={startResearch} />
           </div>
 
-          {/* 示例问题 */}
-          <div className="mt-10">
-            <div className="mb-3.5 text-center text-sm font-medium text-muted-foreground">
+          {/* 示例问题：小写字距标签 + 错位双列（非对称，拒绝等距网格） */}
+          <div className="reveal-line mt-12" style={{ "--d": "320ms" } as React.CSSProperties}>
+            <div className="mb-4 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground/70">
               Try these examples
             </div>
             <ExampleCards onPick={startResearch} />

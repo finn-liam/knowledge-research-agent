@@ -62,7 +62,7 @@ export function AppSidebar() {
               key={to}
               href={to}
               className={cn(
-                "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-300",
                 isActive
                   ? "bg-accent text-accent-foreground"
                   : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
@@ -83,7 +83,7 @@ export function AppSidebar() {
               <button
                 key={t.id}
                 onClick={() => router.push(`/research/${t.id}`)}
-                className="w-full rounded-lg px-3 py-2 text-left transition-colors hover:bg-accent/50"
+                className="w-full rounded-lg px-3 py-2 text-left transition-colors duration-300 hover:bg-accent/50"
               >
                 <div className="truncate text-[13px] font-medium text-foreground/90">
                   {t.title || t.query}

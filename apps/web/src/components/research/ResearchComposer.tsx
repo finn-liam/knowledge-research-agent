@@ -2,6 +2,7 @@
 
 import { Plus, SendHorizontal } from "lucide-react";
 import { useState } from "react";
+import { useMagnetic } from "@/hooks/use-magnetic";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,7 @@ interface ResearchComposerProps {
 export function ResearchComposer({ variant, onSubmit, disabled }: ResearchComposerProps) {
   const [value, setValue] = useState("");
   const hero = variant === "hero";
+  const sendRef = useMagnetic<HTMLButtonElement>();
 
   const submit = () => {
     const query = value.trim();
@@ -51,10 +53,11 @@ export function ResearchComposer({ variant, onSubmit, disabled }: ResearchCompos
           <Plus className="h-4.5 w-4.5" />
         </Button>
         <Button
+          ref={sendRef}
           size="icon"
           onClick={submit}
           disabled={disabled || !value.trim()}
-          className="h-9 w-9 rounded-full"
+          className="magnetic h-9 w-9 rounded-full"
         >
           <SendHorizontal className="h-4 w-4" />
         </Button>

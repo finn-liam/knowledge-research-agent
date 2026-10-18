@@ -125,3 +125,46 @@
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* ============ 动效词汇表（全场统一物理法则） ============ */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);   /* 入场：减速停下，有质量 */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* 交互：短弹簧回弹 */
+}
+
+/* 入场：逐行从遮罩下方上浮（配合 overflow-hidden 容器），delay 用 --d 控制 stagger */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(26px); }
+  to   { opacity: 1; transform: none; }
+}
+.reveal-line {
+  opacity: 0;
+  animation: rise-in 0.7s var(--ease-out-expo) forwards;
+  animation-delay: var(--d, 0ms);
+}
+
+/* 滚动入场：IntersectionObserver 加 .is-in，一次性（离开不重复） */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.6s var(--ease-out-expo),
+    transform 0.6s var(--ease-out-expo);
+  transition-delay: var(--d, 0ms);
+}
+.reveal.is-in { opacity: 1; transform: none; }
+
+/* 磁吸按钮：跟随段用短平滑，离开用弹簧回弹 */
+.magnetic { transition: transform 0.35s var(--ease-spring); will-change: transform; }
+.magnetic.is-near { transition: transform 0.12s ease-out; }
+
+/* 示例卡错位双列：偶数列下沉 */
+.offset-grid-2 > :nth-child(even) { transform: translateY(26px); }
+
+/* 无障碍：装饰动效全量降级（功能完好） */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-line { animation: none; opacity: 1; }
+  .reveal { transition: none; opacity: 1; transform: none; }
+  .magnetic, .magnetic.is-near { transition: none; }
+  .offset-grid-2 > :nth-child(even) { transform: none; }
+}

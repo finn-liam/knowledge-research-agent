@@ -36,7 +36,7 @@ export function SourceItemCard({
     <div
       data-ref-no={source.ref_no}
       className={cn(
-        "w-full max-w-full cursor-pointer rounded-xl border bg-card p-3 transition-all",
+        "w-full max-w-full cursor-pointer rounded-xl border bg-card p-3 transition-all duration-300",
         selected && "border-primary ring-2 ring-primary/30",
         !selected && "hover:border-primary/40",
       )}

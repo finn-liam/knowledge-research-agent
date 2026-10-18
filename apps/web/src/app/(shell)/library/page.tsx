@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useReveal } from "@/hooks/use-reveal";
 import { api } from "@/lib/api";
 import { relativeTime } from "@/lib/format";
 
@@ -17,6 +18,7 @@ const STATUS_LABEL: Record<string, { text: string; variant: "default" | "seconda
 /** Library：历史研究报告列表 */
 export default function LibraryPage() {
   const router = useRouter();
+  const revealRef = useReveal<HTMLDivElement>();
   const { data: tasks } = useQuery({
     queryKey: ["library"],
     queryFn: () => api.listResearch(50),
@@ -25,16 +27,17 @@ export default function LibraryPage() {
 
   return (
     <ScrollArea className="min-w-0 flex-1">
-      <div className="mx-auto max-w-[860px] px-8 py-8">
+      <div ref={revealRef} className="mx-auto max-w-[860px] px-8 py-8">
         <h1 className="text-xl font-bold">Library</h1>
         <p className="mt-1 text-sm text-muted-foreground">全部研究报告</p>
         <div className="mt-6 space-y-2.5">
-          {(tasks ?? []).map((t) => {
+          {(tasks ?? []).map((t, i) => {
             const status = STATUS_LABEL[t.status] ?? STATUS_LABEL.running;
             return (
               <Card
                 key={t.id}
-                className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-md"
+                className="reveal cursor-pointer transition-all duration-300 hover:border-primary/50 hover:shadow-md"
+                style={{ "--d": `${Math.min(i, 8) * 50}ms` } as React.CSSProperties}
                 onClick={() => router.push(`/research/${t.id}`)}
               >
                 <CardContent className="flex items-center justify-between p-4">

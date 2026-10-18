@@ -12,7 +12,7 @@ const EXAMPLES: { icon: LucideIcon; text: string }[] = [
 /** 首页「Try these examples」示例问题卡片组 */
 export function ExampleCards({ onPick }: { onPick: (query: string) => void }) {
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="offset-grid-2 grid grid-cols-2 gap-3">
       {EXAMPLES.map(({ icon: Icon, text }) => (
         <button
           key={text}

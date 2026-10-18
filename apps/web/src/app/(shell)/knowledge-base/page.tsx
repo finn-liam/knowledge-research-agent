@@ -7,12 +7,14 @@ import { ChunkPreviewDialog } from "@/components/kb/ChunkPreviewDialog";
 import { DocumentTable } from "@/components/kb/DocumentTable";
 import { UploadZone } from "@/components/kb/UploadZone";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useReveal } from "@/hooks/use-reveal";
 import { api } from "@/lib/api";
 import type { KbDocument } from "@/types";
 
 /** Knowledge Base：本地知识库管理（上传→解析→切片→向量化→检索） */
 export default function KnowledgeBasePage() {
   const queryClient = useQueryClient();
+  const revealRef = useReveal<HTMLDivElement>();
   const [previewDoc, setPreviewDoc] = useState<KbDocument | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
@@ -62,7 +64,7 @@ export default function KnowledgeBasePage() {
 
   return (
     <ScrollArea className="min-w-0 flex-1">
-      <div className="mx-auto max-w-[1000px] px-8 py-8">
+      <div ref={revealRef} className="mx-auto max-w-[1000px] px-8 py-8">
         <h1 className="text-xl font-bold">Knowledge Base</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           本地知识库：上传文档后自动完成解析、语义切片与 bge-m3 向量化，研究报告的"查询本地知识库"
@@ -77,7 +79,7 @@ export default function KnowledgeBasePage() {
         )}
 
         {/* 统计条 */}
-        <div className="mt-5 grid grid-cols-5 gap-3">
+        <div className="reveal mt-5 grid grid-cols-5 gap-3">
           {statCards.map(({ icon: Icon, label, value, tint }) => (
             <div key={label} className="rounded-xl border bg-card p-3.5">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -90,7 +92,7 @@ export default function KnowledgeBasePage() {
         </div>
 
         {/* 上传区 */}
-        <div className="mt-5">
+        <div className="reveal mt-5" style={{ "--d": "80ms" } as React.CSSProperties}>
           <UploadZone uploading={uploadMutation.isPending} onUpload={(files) => uploadMutation.mutate(files)} />
         </div>
 
