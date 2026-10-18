@@ -158,13 +158,9 @@
 .magnetic { transition: transform 0.35s var(--ease-spring); will-change: transform; }
 .magnetic.is-near { transition: transform 0.12s ease-out; }
 
-/* 示例卡错位双列：偶数列下沉 */
-.offset-grid-2 > :nth-child(even) { transform: translateY(26px); }
-
 /* 无障碍：装饰动效全量降级（功能完好） */
 @media (prefers-reduced-motion: reduce) {
   .reveal-line { animation: none; opacity: 1; }
   .reveal { transition: none; opacity: 1; transform: none; }
   .magnetic, .magnetic.is-near { transition: none; }
-  .offset-grid-2 > :nth-child(even) { transform: none; }
 }
