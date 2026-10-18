@@ -914,13 +914,22 @@ async def report_writer_node(state: ResearchState) -> dict:
             report = mock_text
 
         # --- Answer Verification（真实 LLM 模式）---
+        # 核查是一次阻塞式 LLM 调用（实测约 10s），先广播可见化事件——
+        # 否则报告流完到 completed 之间界面完全静默，用户以为卡死
         if llm.mode == "deepseek" and sources:
+            EVENT_BUS.emit(task_id, "verifying", {"answer_chars": len(report)})
             verify_payload = await llm.extract_json(
                 VERIFY_PROMPT.format(
                     query=original_query, answer=report, context_block=_build_context_block(sources)
                 ),
                 {"faithfulness": 1.0, "unsupported_claims": [], "pass": True},
             )
+            if isinstance(verify_payload, dict):
+                EVENT_BUS.emit(task_id, "verify_result", {
+                    "pass": bool(verify_payload.get("pass")),
+                    "faithfulness": verify_payload.get("faithfulness"),
+                    "unsupported": len(verify_payload.get("unsupported_claims") or []),
+                })
             if isinstance(verify_payload, dict) and not verify_payload.get("pass"):
                 # 附核查反馈重生成一次
                 claims = verify_payload.get("unsupported_claims") or []

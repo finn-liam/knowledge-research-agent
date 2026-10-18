@@ -14,6 +14,8 @@ const EVENT_NAMES = [
   "sources_final",
   "kb_status",
   "graph_updated",
+  "verifying",
+  "verify_result",
   "report_token",
   "report_reset",
   "replay_end",

@@ -105,6 +105,20 @@ function timelineText(event: string, data: Record<string, unknown>): { kind: Tim
       ).length;
       return { kind: "grade", text: `质量评判：${grades.length} 条中高分 ${high} 条、低分 ${low} 条` };
     }
+    case "verifying": {
+      const n = typeof data.answer_chars === "number" ? data.answer_chars : 0;
+      return { kind: "grade", text: `答案核查：逐条验证论断与引用依据（${n} 字）…` };
+    }
+    case "verify_result": {
+      const ok = data.pass !== false;
+      const fa = typeof data.faithfulness === "number" ? Math.round((data.faithfulness as number) * 100) : null;
+      return {
+        kind: ok ? "step_completed" : "rewrite",
+        text: ok
+          ? `核查通过${fa !== null ? `（忠实度 ${fa}%）` : ""}`
+          : `发现无依据论断 ${data.unsupported ?? "?"} 条，附修正要求重新生成`,
+      };
+    }
     case "rewrite": {
       const q = String(data.query ?? "");
       return { kind: "rewrite", text: `反思重查：改写问题为「${q.slice(0, 40)}${q.length > 40 ? "…" : ""}」` };
@@ -121,27 +135,37 @@ function timelineText(event: string, data: Record<string, unknown>): { kind: Tim
   }
 }
 
-// 流式节流：report_token 累积到 pending，100ms 批量刷入 reportBuffer（降低全树重渲染频率）
-const FLUSH_INTERVAL_MS = 100;
+// 流式平滑渲染（打字机）：网络/模型侧可能整段高速倾泻（实测 8594 字 2.4s 内到达），
+// 到达与显示解耦——pending 队列按自适应速率逐帧释放，长文约 4-6s 匀速打完，
+// 无论后端到达多急，用户看到的始终是连续渐进的流式输出。
+const DRIP_INTERVAL_MS = 30;
 let pendingTokens = "";
-let flushTimer: ReturnType<typeof setTimeout> | null = null;
+let dripTimer: ReturnType<typeof setInterval> | null = null;
 
-function scheduleFlush(set: (partial: Partial<ResearchState>) => void, get: () => ResearchState) {
-  if (flushTimer) return;
-  flushTimer = setTimeout(() => {
-    flushTimer = null;
-    if (!pendingTokens) return;
-    const tokens = pendingTokens;
-    pendingTokens = "";
-    set({ reportBuffer: get().reportBuffer + tokens });
-  }, FLUSH_INTERVAL_MS);
+function startDrip(set: (partial: Partial<ResearchState>) => void, get: () => ResearchState) {
+  if (dripTimer) return;
+  dripTimer = setInterval(() => {
+    if (!pendingTokens) {
+      stopDrip();
+      return;
+    }
+    // 自适应释放：队列越长单帧释放越多（最长约 150 帧 ≈ 4.5s 排空），最慢 ~200 字/秒
+    const k = Math.max(6, Math.ceil(pendingTokens.length / 150));
+    const piece = pendingTokens.slice(0, k);
+    pendingTokens = pendingTokens.slice(k);
+    set({ reportBuffer: get().reportBuffer + piece });
+  }, DRIP_INTERVAL_MS);
+}
+
+function stopDrip() {
+  if (dripTimer) {
+    clearInterval(dripTimer);
+    dripTimer = null;
+  }
 }
 
 function clearFlush() {
-  if (flushTimer) {
-    clearTimeout(flushTimer);
-    flushTimer = null;
-  }
+  stopDrip();
   pendingTokens = "";
 }
 
@@ -288,9 +312,9 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
         break;
       }
       case "report_token": {
-        // 节流：累积 60ms 批量刷新，避免每 token 触发全树重渲染
+        // 到达即入队，由打字机 drip 逐帧释放显示（见 startDrip）
         pendingTokens += String(data.delta ?? "");
-        scheduleFlush(set, get);
+        startDrip(set, get);
         break;
       }
       case "report_reset": {
@@ -306,11 +330,9 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
         break;
       }
       case "report_completed": {
-        // 立即刷新剩余累积的 token（必须取最新 buffer——顶部捕获的 state 是旧快照，
-        // 旧实现导致入库报告缺最后一段 token）
-        const freshBuffer = get().reportBuffer + pendingTokens;
-        pendingTokens = "";
-        clearFlush();
+        // 完整文本 = 已显示 + 待显示（取最新值——顶部捕获的 state 是旧快照，曾致入库缺尾段）。
+        // 显示侧不打断打字机：pending 继续自然打完，完成事件只落元数据/版本
+        const fullText = get().reportBuffer + pendingTokens;
         const rid = Number(data.report_id ?? 0);
         // 重放去重：同一报告（report_id 相同）不重复追加版本
         const already = rid > 0 && state.reports.some((r) => r.id === rid);
@@ -318,12 +340,11 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
           id: rid,
           title: String(data.title ?? ""),
           summary: "",
-          markdown: freshBuffer,
+          markdown: fullText,
           version: (state.reports.at(-1)?.version ?? 0) + 1,
         };
         set({
           phase: "done",
-          reportBuffer: freshBuffer,
           reportTitle: String(data.title ?? ""),
           stats: (data.stats as RunStats) ?? {},
           reports: already ? state.reports : [...state.reports, newReport],
@@ -352,6 +373,10 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
     // 异步校准返回时若仍拦在 streaming 守卫外，"完成校准"永远不会生效
     if (state.phase !== "streaming" && !force) return;
     const applyReport = force || !state.snapshotLocked;
+    if (applyReport && d.report?.markdown) {
+      // 报告被快照/校准整体替换：清空打字机队列，防替换后又把旧尾巴追加回来
+      clearFlush();
+    }
     set({
       reportBuffer: applyReport && d.report?.markdown ? d.report.markdown : state.reportBuffer,
       reportTitle: d.report?.title ?? state.reportTitle,
