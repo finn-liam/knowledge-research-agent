@@ -913,6 +913,13 @@ async def report_writer_node(state: ResearchState) -> dict:
         if len(report) < 20:
             report = mock_text
 
+        # 初稿完成：立即翻步骤为已完成 + 通知前端熄灭流式光标——
+        # 随后的忠实度核查（~10s 阻塞 LLM 调用）在时间线呈现，
+        # 消除"文字已出完但步骤还处理中/光标还在呼吸"的假卡顿窗口
+        report, used_refs = _verify_citations(report, sources)
+        EVENT_BUS.emit(task_id, "report_draft_done", {})
+        await _step(task_id, "report_write", "生成分析报告", "done", {"chars": len(report)})
+
         # --- Answer Verification（真实 LLM 模式）---
         # 核查是一次阻塞式 LLM 调用（实测约 10s），先广播可见化事件——
         # 否则报告流完到 completed 之间界面完全静默，用户以为卡死
@@ -944,6 +951,8 @@ async def report_writer_node(state: ResearchState) -> dict:
                     + lang_note
                     + fix_note
                 )
+                await _step(task_id, "report_write", "生成分析报告", "running")
+                EVENT_BUS.emit(task_id, "report_revise", {})
                 parts2: list[str] = []
                 async for piece in llm.stream_report(prompt2, mock_text):
                     parts2.append(piece)
@@ -952,6 +961,9 @@ async def report_writer_node(state: ResearchState) -> dict:
                 if len(report2) < 20:
                     report2 = mock_text
                 report = report2
+                report, used_refs = _verify_citations(report, sources)
+                EVENT_BUS.emit(task_id, "report_draft_done", {})
+                await _step(task_id, "report_write", "生成分析报告", "done", {"chars": len(report)})
 
     report, used_refs = _verify_citations(report, sources)
 

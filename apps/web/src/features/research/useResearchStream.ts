@@ -17,6 +17,8 @@ const EVENT_NAMES = [
   "verifying",
   "verify_result",
   "report_token",
+  "report_draft_done",
+  "report_revise",
   "report_reset",
   "replay_end",
   "report_completed",

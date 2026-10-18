@@ -11,6 +11,7 @@ export const ReportStreamArea = memo(function ReportStreamArea() {
   const phase = useResearchStore((s) => s.phase);
   const reportBuffer = useResearchStore((s) => s.reportBuffer);
   const lastReportMd = useResearchStore((s) => s.reports.at(-1)?.markdown ?? "");
+  const draftDone = useResearchStore((s) => s.draftDone);
 
   const streaming = phase === "streaming";
   // 当前轮报告：流式中只用本轮 buffer；完成后 buffer 为空才回退最后一版
@@ -35,7 +36,7 @@ export const ReportStreamArea = memo(function ReportStreamArea() {
   return (
     <>
       {currentReport ? (
-        <ReportViewer markdown={currentReport} streaming={streaming} />
+        <ReportViewer markdown={currentReport} streaming={streaming && !draftDone} />
       ) : (
         streaming && (
           <div className="space-y-2.5 pt-2">

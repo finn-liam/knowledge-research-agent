@@ -39,6 +39,7 @@ interface ResearchState {
   messages: ChatMessage[]; // 多轮对话历史
   reports: ReportInfo[]; // 多轮报告历史（version 升序）
   snapshotLocked: boolean; // 新一轮开始后禁止 onopen 快照覆盖报告
+  draftDone: boolean; // 初稿已流完（熄灭流式光标；此后为核查/落库阶段）
   replaying: boolean; // SSE 重放中（重连/刷新后的历史回放，抑制时间线重复与报告重复追加）
   timeline: TimelineEntry[]; // 研究过程时间线（C1：Agent 思考直播，最新在底部）
 
@@ -104,6 +105,9 @@ function timelineText(event: string, data: Record<string, unknown>): { kind: Tim
           ((g as Record<string, unknown>).score as number) < 0.4,
       ).length;
       return { kind: "grade", text: `质量评判：${grades.length} 条中高分 ${high} 条、低分 ${low} 条` };
+    }
+    case "report_revise": {
+      return { kind: "rewrite", text: "核查未通过：按修正要求重新生成报告" };
     }
     case "verifying": {
       const n = typeof data.answer_chars === "number" ? data.answer_chars : 0;
@@ -186,6 +190,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   messages: [],
   reports: [],
   snapshotLocked: false,
+  draftDone: false,
   replaying: false,
   timeline: [],
 
@@ -211,6 +216,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       messages: d.messages,
       reports: d.reports ?? [],
       snapshotLocked: false,
+      draftDone: false,
       timeline: [],
     });
   },
@@ -234,6 +240,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       selectedRefNo: null,
       messages,
       snapshotLocked: true, // 本轮报告只能来自 SSE 流式，禁止快照覆盖
+      draftDone: false,
       replaying: false,
       timeline: [{ id: ++timelineSeq, ts: Date.now(), kind: "router", text: "新问题已提交，开始研究" }],
     });
@@ -317,11 +324,21 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
         startDrip(set, get);
         break;
       }
+      case "report_draft_done": {
+        set({ draftDone: true });
+        break;
+      }
+      case "report_revise": {
+        // 核查未过、按修正要求重生成：清空缓冲重建（同 report_reset 语义）
+        clearFlush();
+        set({ reportBuffer: "", draftDone: false });
+        break;
+      }
       case "report_reset": {
         // 重放协议：历史含 report_token，先清空缓冲再按序重建（重连/刷新后文本无破洞）
         if (get().phase === "streaming") {
           clearFlush();
-          set({ reportBuffer: "" });
+          set({ reportBuffer: "", draftDone: false });
         }
         break;
       }
@@ -349,6 +366,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
           stats: (data.stats as RunStats) ?? {},
           reports: already ? state.reports : [...state.reports, newReport],
           snapshotLocked: false,
+          draftDone: true,
           replaying: false,
         });
         break;
