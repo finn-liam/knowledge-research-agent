@@ -4,9 +4,11 @@ import {
   Children,
   cloneElement,
   isValidElement,
+  memo,
   useEffect,
   type ReactElement,
   type ReactNode,
+  useDeferredValue,
 } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -57,8 +59,11 @@ const citationComponents = {
 };
 
 /** Markdown 报告渲染器：注入可交互引用徽标，支持流式追加；点击右侧来源时反向滚动定位 [n] */
-export function ReportViewer({ markdown, streaming }: { markdown: string; streaming: boolean }) {
+function ReportViewerInner({ markdown, streaming }: { markdown: string; streaming: boolean }) {
   const selectedRefNo = useResearchStore((s) => s.selectedRefNo);
+  // 打字机 30ms/帧到达时全文重解析代价高：deferred 让 markdown 解析可中断，
+  // 高频更新下 React 先提交紧急交互、解析在低优先级通道追平
+  const deferredMarkdown = useDeferredValue(markdown);
 
   // 反向联动：点击右侧来源 → 报告内对应 [n] 滚动定位（与来源区 data-ref-no 命名区分）
   useEffect(() => {
@@ -74,7 +79,7 @@ export function ReportViewer({ markdown, streaming }: { markdown: string; stream
   return (
     <div className="report-body mt-5">
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={citationComponents}>
-        {markdown}
+        {deferredMarkdown}
       </ReactMarkdown>
       {streaming && (
         <span className="ml-0.5 inline-block h-4 w-2 animate-pulse-soft rounded-sm bg-primary/70 align-text-bottom" />
@@ -82,3 +87,6 @@ export function ReportViewer({ markdown, streaming }: { markdown: string; stream
     </div>
   );
 }
+
+/** memo + deferred：流式高频更新下解析不阻塞交互 */
+export const ReportViewer = memo(ReportViewerInner);

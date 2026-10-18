@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { GraphMiniPanel } from "@/components/graph/GraphMiniPanel";
 import { RightPanel } from "@/components/layout/RightPanel";
@@ -9,22 +9,36 @@ import { AgentStepCards } from "@/components/research/AgentStepCards";
 import { Disclaimer } from "@/components/research/Disclaimer";
 import { ProcessTimeline } from "@/components/research/ProcessTimeline";
 import { ReportHeader } from "@/components/research/ReportHeader";
+import { ReportStreamArea } from "@/components/research/ReportStreamArea";
 import { ReportViewer } from "@/components/research/ReportViewer";
 import { ResearchComposer } from "@/components/research/ResearchComposer";
 import { UserBubble } from "@/components/research/UserBubble";
 import { SourcesPanel } from "@/components/sources/SourcesPanel";
 import { RunStatsPanel } from "@/components/stats/RunStatsPanel";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useResearchStore } from "@/features/research/researchStore";
 import { useResearchStream } from "@/features/research/useResearchStream";
 import { useUserStore } from "@/features/user/userStore";
 import { api } from "@/lib/api";
 
-/** 研究报告页：多轮对话流 + 当前轮步骤卡 + 流式报告 + 右侧面板（对齐效果图2） */
+/** 研究报告页：多轮对话流 + 当前轮步骤卡 + 流式报告 + 右侧面板（对齐效果图2）
+
+ * 渲染分层（性能关键）：页面只订阅低频字段（步骤/来源/消息/面板数据），
+ * 打字机 30ms/帧的 reportBuffer 更新被隔离在 ReportStreamArea 内——
+ * 流式期间本页与其余子树（输入框/来源面板/时间线）不重渲染。
+ */
 export default function ResearchPage() {
   const { taskId } = useParams<{ taskId: string }>();
-  const store = useResearchStore();
+  const phase = useResearchStore((s) => s.phase);
+  const steps = useResearchStore((s) => s.steps);
+  const sources = useResearchStore((s) => s.sources);
+  const graph = useResearchStore((s) => s.graph);
+  const stats = useResearchStore((s) => s.stats);
+  const messages = useResearchStore((s) => s.messages);
+  const reports = useResearchStore((s) => s.reports);
+  const headerTitle = useResearchStore((s) => s.reportTitle || s.title);
+  const error = useResearchStore((s) => s.error);
+  const streaming = phase === "streaming";
 
   // 挂载/换任务：拉取详情并水合 store（运行中任务随后由 SSE 接管）
   useEffect(() => {
@@ -49,72 +63,46 @@ export default function ResearchPage() {
     }
   };
 
-  const lastMsgIndex = Math.max(0, store.messages.length - 1);
-  // 当前轮报告：流式中只用本轮 buffer（空 → 骨架屏，绝不回退上一轮报告）；
-  // 仅完成后 buffer 为空（如重连快照未恢复）才回退 reports 最后一项
-  const currentReport =
-    store.phase === "streaming"
-      ? store.reportBuffer
-      : store.reportBuffer || store.reports.at(-1)?.markdown || "";
-  const streaming = store.phase === "streaming";
-
-  // 流式输出期间自动滚动到底部（让用户始终看到最新生成的回答）
-  const bottomRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (streaming && store.reportBuffer) {
-      bottomRef.current?.scrollIntoView({ behavior: "auto", block: "end", inline: "nearest" });
-      if (window.scrollX !== 0) window.scrollTo({ left: 0 });
-    }
-  }, [store.reportBuffer, streaming]);
+  const lastMsgIndex = Math.max(0, messages.length - 1);
 
   return (
     <>
       <div className="flex min-w-0 flex-1 flex-col">
         <ReportHeader
-          title={store.reportTitle || store.title}
+          title={headerTitle}
           taskId={taskId ?? null}
-          canExport={store.phase === "done"}
+          canExport={phase === "done"}
         />
 
         <ScrollArea className="min-h-0 flex-1">
           <div className="mx-auto max-w-[860px] space-y-5 px-8 py-6">
             {/* 多轮对话：每轮 = 用户气泡 + Agent 报告块 */}
-            {store.messages.map((msg, i) => {
+            {messages.map((msg, i) => {
               const isLast = i === lastMsgIndex;
-              const report = i < store.reports.length ? store.reports[i].markdown : null;
+              const report = i < reports.length ? reports[i].markdown : null;
               return (
                 <div key={i} className="space-y-4">
                   <UserBubble content={msg.content} />
                   {isLast ? (
                     <div className="space-y-4">
-                      <AgentHeader phase={store.phase} />
-                      <AgentStepCards steps={store.steps} />
+                      <AgentHeader phase={phase} />
+                      <AgentStepCards steps={steps} />
                       <ProcessTimeline />
 
-                      {store.phase === "failed" && (
+                      {phase === "failed" && (
                         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
-                          研究过程出现错误：{store.error ?? "未知错误"}，请重试。
+                          研究过程出现错误：{error ?? "未知错误"}，请重试。
                         </div>
                       )}
 
-                      {store.phase === "interrupted" && (
+                      {phase === "interrupted" && (
                         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
                           连接中断，研究可能未完成。请刷新页面查看最终结果，或重新提问。
                         </div>
                       )}
 
-                      {currentReport ? (
-                        <ReportViewer markdown={currentReport} streaming={streaming} />
-                      ) : (
-                        streaming && (
-                          <div className="space-y-2.5 pt-2">
-                            <Skeleton className="h-5 w-2/5" />
-                            <Skeleton className="h-4 w-full" />
-                            <Skeleton className="h-4 w-11/12" />
-                            <Skeleton className="h-4 w-4/5" />
-                          </div>
-                        )
-                      )}
+                      {/* 当前轮报告（骨架屏/流式打字机/完成回退）自治渲染 + 自动滚动 */}
+                      <ReportStreamArea />
                     </div>
                   ) : (
                     report && (
@@ -127,8 +115,6 @@ export default function ResearchPage() {
                 </div>
               );
             })}
-            {/* 流式自动滚动定位锚点 */}
-            <div ref={bottomRef} />
           </div>
         </ScrollArea>
 
@@ -137,7 +123,7 @@ export default function ResearchPage() {
             <ResearchComposer
               variant="followup"
               onSubmit={followup}
-              disabled={store.phase === "streaming"}
+              disabled={streaming}
             />
             <Disclaimer />
           </div>
@@ -145,9 +131,9 @@ export default function ResearchPage() {
       </div>
 
       <RightPanel>
-        <SourcesPanel sources={store.sources} />
-        <GraphMiniPanel graph={store.graph} hint="知识图谱功能暂缓，将在后续版本启用" />
-        <RunStatsPanel stats={store.stats} />
+        <SourcesPanel sources={sources} />
+        <GraphMiniPanel graph={graph} hint="知识图谱功能暂缓，将在后续版本启用" />
+        <RunStatsPanel stats={stats} />
       </RightPanel>
     </>
   );
