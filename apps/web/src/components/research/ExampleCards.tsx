@@ -17,10 +17,10 @@ export function ExampleCards({ onPick }: { onPick: (query: string) => void }) {
         <button
           key={text}
           onClick={() => onPick(text)}
-          className="flex items-start gap-3 rounded-xl border bg-card p-3.5 text-left transition-all hover:border-primary/50 hover:shadow-md"
+          className="group flex items-start gap-3 rounded-xl border bg-card p-3.5 text-left transition-all duration-300 hover:border-primary/40 hover:shadow-md"
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent">
-            <Icon className="h-4 w-4 text-primary" />
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted transition-colors duration-300 group-hover:bg-accent">
+            <Icon className="h-4 w-4 text-muted-foreground transition-colors duration-300 group-hover:text-primary" />
           </div>
           <div className="text-[13px] font-medium leading-snug text-foreground/85">{text}</div>
         </button>

@@ -1,11 +1,37 @@
+"use client";
+
 import { BookCheck, Database, FileCheck2, Info, Target } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useCountUp } from "@/hooks/use-count-up";
 import { formatNumber } from "@/lib/format";
 import type { AnalyticsSummary } from "@/types";
-import { StatRow } from "./StatRow";
 
-/** 首页右侧「Research Statistics」全局统计面板（累计口径） */
+function BigStat({
+  value,
+  label,
+  suffix = "",
+}: {
+  value: number;
+  label: string;
+  suffix?: string;
+}) {
+  const { ref, value: animated } = useCountUp(value);
+  return (
+    <div ref={ref} className="px-1 py-2.5">
+      {/* 数据是最有说服力的内容：40px 等宽数字占据视觉重量 */}
+      <div className="text-[36px] font-bold leading-none tracking-tight tabular-nums">
+        {formatNumber(animated)}
+        {suffix && <span className="ml-0.5 text-[20px] font-semibold text-muted-foreground">{suffix}</span>}
+      </div>
+      <div className="mt-2 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </div>
+    </div>
+  );
+}
+
+/** 首页「Research Statistics」全局统计：2×2 大数字网格（累计口径） */
 export function ResearchStatsPanel({ summary }: { summary: AnalyticsSummary | undefined }) {
   return (
     <Card>
@@ -24,19 +50,11 @@ export function ResearchStatsPanel({ summary }: { summary: AnalyticsSummary | un
             </TooltipContent>
           </Tooltip>
         </div>
-        <div className="mt-2 divide-y divide-border/60">
-          <StatRow icon={BookCheck} label="Total Research" value={summary?.total_research ?? 0} />
-          <StatRow
-            icon={Database}
-            label="Knowledge Sources"
-            value={formatNumber(summary?.knowledge_sources ?? 0)}
-          />
-          <StatRow
-            icon={FileCheck2}
-            label="Documents Hit"
-            value={formatNumber(summary?.documents_processed ?? 0)}
-          />
-          <StatRow icon={Target} label="Accuracy Rate" value={`${summary?.accuracy_rate ?? 0}%`} />
+        <div className="mt-1 grid grid-cols-2 gap-x-2">
+          <BigStat value={summary?.total_research ?? 0} label="Total Research" />
+          <BigStat value={summary?.knowledge_sources ?? 0} label="Sources" />
+          <BigStat value={summary?.documents_processed ?? 0} label="Docs Hit" />
+          <BigStat value={summary?.accuracy_rate ?? 0} label="Accuracy" suffix="%" />
         </div>
       </CardContent>
     </Card>

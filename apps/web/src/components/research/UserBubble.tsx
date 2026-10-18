@@ -13,7 +13,7 @@ export function UserBubble({ content }: { content: string }) {
       <Avatar className="h-8 w-8">
         <AvatarFallback>{userInitials(mounted ? persistedName : "")}</AvatarFallback>
       </Avatar>
-      <div className="rounded-xl rounded-tl-sm bg-accent/80 px-4 py-2.5 text-sm leading-relaxed text-foreground">
+      <div className="rounded-xl rounded-tl-sm bg-muted/70 px-4 py-2.5 text-sm leading-relaxed text-foreground">
         {content}
       </div>
     </div>

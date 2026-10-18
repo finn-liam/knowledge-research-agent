@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { GraphMiniPanel } from "@/components/graph/GraphMiniPanel";
 import { RightPanel } from "@/components/layout/RightPanel";
@@ -41,14 +40,16 @@ export default function HomePage() {
     <>
       <ScrollArea className="min-w-0 flex-1">
         <div className="mx-auto max-w-[860px] px-8 pb-16 pt-14">
-          {/* 欢迎区 */}
+          {/* 欢迎区：排印层级（eyebrow → 44px 主标 → 说明），主色只留给活物 */}
           <div className="text-center">
-            <h1 className="flex items-center justify-center gap-2 text-[28px] font-bold tracking-tight">
-              Welcome to Knowledge Research Agent
-              <Sparkles className="h-6 w-6 text-primary" />
+            <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground/70">
+              Agentic RAG · Multi-Source · Cited
+            </div>
+            <h1 className="mt-3 text-[44px] font-bold leading-[1.08] tracking-[-0.02em]">
+              Knowledge Research Agent
             </h1>
-            <p className="mt-2.5 text-[15px] text-muted-foreground">
-              Your AI-powered assistant for enterprise knowledge research and analysis
+            <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
+              问一个问题，自动完成多源检索、质量判断与反思重查，给出带引用溯源的研究报告
             </p>
           </div>
 
