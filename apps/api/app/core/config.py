@@ -68,6 +68,10 @@ class Settings(BaseSettings):
     hyde_enabled: bool = False
     # 兄弟切片扩展：命中切片的 ±1 邻居自动进入候选（零 LLM 成本）
     sibling_expand: bool = True
+    # 评分快通道：精排 Top3 均分 ≥ 此值时跳过 LLM 评分与反思循环（高质量检索直达生成）
+    grade_fastpath_top3: float = 0.60
+    # 研究时间预算：反思重查决策时已耗时超此值则直接生成（防 3 分钟长尾）
+    research_time_budget_sec: float = 60.0
     # 重排：RRF 融合后 bge-reranker-v2-m3 模型精排（false 仅 RRF 排名）
     rerank_enabled: bool = True
 

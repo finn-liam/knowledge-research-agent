@@ -5,7 +5,7 @@ ROUTER_PROMPT = """你是一名本地知识库助手的检索规划器（Planner
 用户输入：{query}
 
 输出 JSON（不要输出其他内容）：
-{{"type": "chat" 或 "knowledge", "kb": true/false, "paper": true/false, "web": true/false}}
+{{"type": "chat" 或 "knowledge", "kb": true/false, "paper": true/false, "web": true/false, "sub_queries": ["2 个从不同措辞检索同一问题的查询变体"]}}
 
 判断规则：
 - "chat"：寒暄、闲聊、问候、感谢、告别、自我介绍类（如"你好""谢谢""你是谁"），不需要检索，三个来源全 false
@@ -18,7 +18,8 @@ ROUTER_PROMPT = """你是一名本地知识库助手的检索规划器（Planner
 "Python是什么" → {{"type":"knowledge","kb":true,"paper":false,"web":false}}
 "OpenAI最新发布了什么模型" → {{"type":"knowledge","kb":false,"paper":false,"web":true}}
 "Transformer 最新研究" → {{"type":"knowledge","kb":true,"paper":true,"web":true}}
-"对比我们的方案和学术界的最新做法" → {{"type":"knowledge","kb":true,"paper":true,"web":true}}
+"对比我们的方案和学术界的最新做法" → {{"type":"knowledge","kb":true,"paper":true,"web":true,"sub_queries":["企业内部方案与学术界做法对比","相关技术最新研究进展"]}}
+（chat 与简单事实题 sub_queries 可以为空数组）
 """
 
 CHAT_PROMPT = """你是一名本地知识库助手。用户对你说：{query}

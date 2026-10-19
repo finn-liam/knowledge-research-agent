@@ -161,7 +161,13 @@ async def router_node(state: ResearchState) -> dict:
         {"type": qtype, "query": query[:40], "paused_steps": paused_steps,
          "sources": "multi" if len(plan) > 1 else "kb_only", "plan": plan},
     )
-    return {"query_type": qtype, "search_mode": search_mode, "plan": plan, "escalation": False}
+    # 合并增强：规划调用同时产出子查询变体（省一次独立增强 LLM 调用，约 5-10s）
+    plan_subqueries = [
+        q.strip() for q in (payload.get("sub_queries") or [])
+        if isinstance(q, str) and q.strip() and q.strip() != query
+    ][:2] if qtype == "knowledge" else []
+    return {"query_type": qtype, "search_mode": search_mode, "plan": plan,
+            "plan_subqueries": plan_subqueries, "escalation": False}
 
 
 # ---------------- 知识库检索（混合检索：bge-m3 dense+sparse 双路 RRF） ----------------
@@ -451,12 +457,14 @@ async def kb_retriever_node(state: ResearchState) -> dict:
     top_k = 30 if esc else 20
     min_score = (settings.kb_min_score - 0.05) if esc else None
 
-    # 查询增强：LLM 改写 + 关键词扩展 + 多查询变体 + HyDE（一次调用；Mock/失败 → 原问题）
+    # 查询增强：Planner 合并调用已产出子查询变体则直接复用（省一次 LLM 调用，约 5-10s）；
+    # 未携带（简单题/Mock）时回退独立增强调用。
+    # A/B 结论保持：主查询用用户原话（ab_recall orig_multi），改写产物仅作子查询变体
     dense_query, sparse_query = query, query
-    sub_queries: list[str] = []
+    sub_queries = list(state.get("plan_subqueries") or [])
     hyde_text = ""
     enhanced = False
-    if settings.query_processing:
+    if not sub_queries and settings.query_processing:
         llm = get_llm()
         processed = await llm.extract_json(
             QUERY_PROCESS_PROMPT.format(query=query),
@@ -745,6 +753,28 @@ async def grade_documents_node(state: ResearchState) -> dict:
     if not sources:
         return {"grade_results": [], "route": "done"}
 
+    # 快通道：精排头部质量足够高时跳过 LLM 评分与反思循环（省 5-15s——
+    # 高分场景 LLM 评分与 reranker 分数高度一致，属重复确认）
+    if settings.grade_fastpath_top3 > 0:
+        top3 = sorted((x.get("relevance", 0.0) for x in sources), reverse=True)[:3]
+        if top3 and sum(top3) / len(top3) >= settings.grade_fastpath_top3:
+            grades = [
+                {"ref_no": x["ref_no"], "score": x.get("relevance", 0.0), "reason": "精排高分快通道"}
+                for x in sources
+            ]
+            EVENT_BUS.emit(task_id, "grade_result", {"grades": grades, "query": state.get("query", ""), "fastpath": True})
+            return {"grade_results": grades, "route": "report", "retry_count": state.get("retry_count", 0)}
+
+    # 时间预算：反思重查前检查已耗时，超预算直接生成（防 2-3 分钟长尾）
+    t0 = (state.get("metrics") or {}).get("t0")
+    if t0 and time.time() - float(t0) > settings.research_time_budget_sec:
+        grades = [
+            {"ref_no": x["ref_no"], "score": x.get("relevance", 0.0), "reason": "超出时间预算，直接生成"}
+            for x in sources
+        ]
+        EVENT_BUS.emit(task_id, "grade_result", {"grades": grades, "query": state.get("query", ""), "budget": True})
+        return {"grade_results": grades, "route": "report", "retry_count": state.get("retry_count", 0)}
+
     llm = get_llm()
     items_block = "\n".join(
         f"[{s['ref_no']}] ({s['source_label']}) {s['title']}\n{s.get('snippet', '')[:150]}"
@@ -925,9 +955,18 @@ async def report_writer_node(state: ResearchState) -> dict:
         # 否则报告流完到 completed 之间界面完全静默，用户以为卡死
         if llm.mode == "deepseek" and sources:
             EVENT_BUS.emit(task_id, "verifying", {"answer_chars": len(report)})
+            # 核查瘦身：按相关性取前 8 源，snippet+parent 截断
+            # （原全量 12×2000tok parent ≈24K token，核查 15-20s；瘦身后 3-5s）
+            verify_sources = sorted(sources, key=lambda x: x.get("relevance", 0.0), reverse=True)[:8]
+            parts_ctx: list[str] = []
+            for x in verify_sources:
+                head = (x.get("snippet") or "")[:300]
+                tail = ((x.get("meta") or {}).get("parent_text") or "")[:500]
+                parts_ctx.append(f"[{x['ref_no']}] {x['title']}\n{head}\n{tail}")
+            verify_ctx = "\n\n".join(parts_ctx)
             verify_payload = await llm.extract_json(
                 VERIFY_PROMPT.format(
-                    query=original_query, answer=report, context_block=_build_context_block(sources)
+                    query=original_query, answer=report, context_block=verify_ctx
                 ),
                 {"faithfulness": 1.0, "unsupported_claims": [], "pass": True},
             )
