@@ -1,11 +1,11 @@
 "use client";
 
 import { memo } from "react";
-import { Download, MoreHorizontal, Share2 } from "lucide-react";
+import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 
-/** 研究页标题栏：报告标题 + 分享/导出/更多 */
+/** 研究页标题栏：报告标题 + 导出（分享/更多在功能上线前不渲染，避免死按钮） */
 function ReportHeaderInner({
   title,
   taskId,
@@ -16,25 +16,20 @@ function ReportHeaderInner({
   canExport: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between border-b bg-background/95 px-6 py-3">
-      <h1 className="truncate text-[15px] font-semibold">{title || "研究报告"}</h1>
-      <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-          <Share2 className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-muted-foreground"
-          disabled={!canExport || !taskId}
-          onClick={() => taskId && window.open(api.exportUrl(taskId), "_blank")}
-        >
-          <Download className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </div>
+    <div className="flex items-center justify-between gap-3 border-b bg-background/95 px-4 py-3 md:px-6">
+      <h1 className="truncate text-[15px] font-semibold" title={title || "研究报告"}>
+        {title || "研究报告"}
+      </h1>
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-8 shrink-0 gap-1.5 text-xs"
+        disabled={!canExport || !taskId}
+        onClick={() => taskId && window.open(api.exportUrl(taskId), "_blank")}
+      >
+        <Download className="h-3.5 w-3.5" />
+        导出报告
+      </Button>
     </div>
   );
 }

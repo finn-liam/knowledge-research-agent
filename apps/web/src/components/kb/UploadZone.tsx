@@ -57,7 +57,7 @@ export function UploadZone({
       <div className="mt-3 text-sm font-medium text-foreground/90">
         {uploading ? "正在上传并解析..." : "点击或拖拽上传文档"}
       </div>
-      <div className="mt-1 text-xs text-muted-foreground">
+      <div className="mt-1 max-w-full text-xs leading-relaxed text-muted-foreground">
         支持 PDF / DOCX / MD / TXT · 单文件 ≤100MB · 单批 ≤5 个
       </div>
       {uploading && (

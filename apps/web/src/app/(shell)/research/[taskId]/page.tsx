@@ -75,7 +75,7 @@ export default function ResearchPage() {
         />
 
         <ScrollArea className="min-h-0 flex-1">
-          <div className="mx-auto max-w-[860px] space-y-5 px-8 py-6">
+          <div className="mx-auto max-w-[860px] space-y-8 px-4 py-8 md:px-8">
             {/* 多轮对话：每轮 = 用户气泡 + Agent 报告块 */}
             {messages.map((msg, i) => {
               const isLast = i === lastMsgIndex;
@@ -118,7 +118,7 @@ export default function ResearchPage() {
           </div>
         </ScrollArea>
 
-        <div className="border-t bg-background px-8 pb-2 pt-3">
+        <div className="border-t bg-background px-4 pb-2 pt-3 md:px-8">
           <div className="mx-auto max-w-[860px]">
             <ResearchComposer
               variant="followup"

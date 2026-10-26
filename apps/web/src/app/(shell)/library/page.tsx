@@ -18,16 +18,17 @@ const STATUS_LABEL: Record<string, { text: string; variant: "default" | "seconda
 /** Library：历史研究报告列表 */
 export default function LibraryPage() {
   const router = useRouter();
-  const revealRef = useReveal<HTMLDivElement>();
+  // deps：卡片在数据到达后才挂载，必须让 reveal 观察器重扫，否则永远 opacity:0
   const { data: tasks } = useQuery({
     queryKey: ["library"],
     queryFn: () => api.listResearch(50),
     refetchInterval: 10000,
   });
+  const revealRef = useReveal<HTMLDivElement>([tasks?.length]);
 
   return (
     <ScrollArea className="min-w-0 flex-1">
-      <div ref={revealRef} className="mx-auto max-w-[860px] px-8 py-8">
+      <div ref={revealRef} className="mx-auto max-w-[860px] px-5 py-8 md:px-8">
         <h1 className="text-xl font-bold">Library</h1>
         <p className="mt-1 text-sm text-muted-foreground">全部研究报告</p>
         <div className="mt-6 space-y-2.5">
@@ -36,13 +37,15 @@ export default function LibraryPage() {
             return (
               <Card
                 key={t.id}
-                className="reveal cursor-pointer transition-all duration-300 hover:border-primary/50 hover:shadow-md"
+                className="reveal cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 style={{ "--d": `${Math.min(i, 8) * 50}ms` } as React.CSSProperties}
                 onClick={() => router.push(`/research/${t.id}`)}
               >
-                <CardContent className="flex items-center justify-between p-4">
+                <CardContent className="flex items-center justify-between gap-3 p-4">
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-medium">{t.title || t.query}</div>
+                    <div className="truncate text-sm font-medium" title={t.title || t.query}>
+                      {t.title || t.query}
+                    </div>
                     <div className="mt-1 text-xs text-muted-foreground">
                       {relativeTime(t.created_at)}
                     </div>

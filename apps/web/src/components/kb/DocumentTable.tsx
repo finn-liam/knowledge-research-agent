@@ -15,8 +15,8 @@ export function DocumentTable({
   onDelete: (doc: KbDocument) => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border bg-card">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto rounded-xl border bg-card">
+      <table className="w-full min-w-[760px] text-sm">
         <thead>
           <tr className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
             <th className="px-4 py-2.5 font-medium">文档名称</th>

@@ -61,12 +61,7 @@ function SourcesPanelInner({ sources }: { sources: SourceItem[] }) {
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="flex min-w-0 items-center justify-between gap-3">
-          <div className="min-w-0 truncate text-sm font-semibold">Sources ({sources.length})</div>
-          <button className="shrink-0 whitespace-nowrap text-xs font-medium text-primary transition-opacity duration-300 hover:underline">
-            View all
-          </button>
-        </div>
+        <div className="min-w-0 truncate text-sm font-semibold">Sources ({sources.length})</div>
 
         <Tabs value={tab} onValueChange={setTab} className="mt-3">
           <TabsList className="h-8 w-full justify-start gap-1 bg-transparent p-0">
@@ -100,10 +95,6 @@ function SourcesPanelInner({ sources }: { sources: SourceItem[] }) {
             </div>
           )}
         </div>
-
-        <button className="mt-3 w-full text-center text-xs font-medium text-primary transition-opacity duration-300 hover:underline">
-          Show all {sources.length} sources →
-        </button>
       </CardContent>
 
       <ChunkViewerDialog

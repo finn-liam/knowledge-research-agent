@@ -6,7 +6,6 @@ import { useState } from "react";
 import { ChunkPreviewDialog } from "@/components/kb/ChunkPreviewDialog";
 import { DocumentTable } from "@/components/kb/DocumentTable";
 import { UploadZone } from "@/components/kb/UploadZone";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useReveal } from "@/hooks/use-reveal";
 import { api } from "@/lib/api";
 import type { KbDocument } from "@/types";
@@ -14,8 +13,7 @@ import type { KbDocument } from "@/types";
 /** Knowledge Base：本地知识库管理（上传→解析→切片→向量化→检索） */
 export default function KnowledgeBasePage() {
   const queryClient = useQueryClient();
-  const revealRef = useReveal<HTMLDivElement>();
-  const [previewDoc, setPreviewDoc] = useState<KbDocument | null>(null);
+  const revealRef = useReveal<HTMLDivElement>();  const [previewDoc, setPreviewDoc] = useState<KbDocument | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
   // isPending（而非 isLoading）：SSR 阶段 enabled=false 时 isFetching 恒为 false，
@@ -63,8 +61,10 @@ export default function KnowledgeBasePage() {
   ];
 
   return (
-    <ScrollArea className="min-w-0 flex-1">
-      <div ref={revealRef} className="mx-auto max-w-[1000px] px-8 py-8">
+    /* 原生滚动（非 Radix ScrollArea）：其视口 display:table 的内在宽度会被宽表格撑开，
+     * 在窄屏把整页内容拉宽到表格宽度；原生容器让表格只在 overflow-x-auto 内部横滚 */
+    <div className="min-w-0 flex-1 overflow-y-auto">
+      <div ref={revealRef} className="mx-auto max-w-[1000px] px-5 py-8 md:px-8">
         <h1 className="text-xl font-bold">Knowledge Base</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           本地知识库：上传文档后自动完成解析、语义切片与 bge-m3 向量化，研究报告的"查询本地知识库"
@@ -78,8 +78,8 @@ export default function KnowledgeBasePage() {
           </div>
         )}
 
-        {/* 统计条 */}
-        <div className="reveal mt-5 grid grid-cols-5 gap-3">
+        {/* 统计条（移动端 2 列 → 平板 3 列 → 桌面 5 列） */}
+        <div className="reveal mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {statCards.map(({ icon: Icon, label, value, tint }) => (
             <div key={label} className="rounded-xl border bg-card p-3.5">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -116,6 +116,6 @@ export default function KnowledgeBasePage() {
       </div>
 
       <ChunkPreviewDialog doc={previewDoc} open={previewOpen} onOpenChange={setPreviewOpen} />
-    </ScrollArea>
+    </div>
   );
 }

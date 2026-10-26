@@ -39,7 +39,7 @@ export default function HomePage() {
   return (
     <>
       <ScrollArea className="min-w-0 flex-1">
-        <div className="mx-auto max-w-[860px] px-8 pb-20 pt-16">
+        <div className="mx-auto max-w-[860px] px-5 pb-20 pt-10 md:px-8 md:pt-20">
           {/* 欢迎区：左对齐编辑式排版（eyebrow → 48px 主标 → 说明），逐行遮罩上浮入场 */}
           <div>
             <div
@@ -49,7 +49,7 @@ export default function HomePage() {
               Agentic RAG · Multi-Source · Cited
             </div>
             <h1
-              className="reveal-line mt-3 max-w-[640px] text-[48px] font-bold leading-[1.06] tracking-[-0.025em]"
+              className="reveal-line mt-3 max-w-[640px] text-[34px] font-bold leading-[1.1] tracking-[-0.025em] sm:text-[44px] md:text-[48px] md:leading-[1.06]"
               style={{ "--d": "80ms" } as React.CSSProperties}
             >
               问一个问题，
@@ -65,12 +65,12 @@ export default function HomePage() {
           </div>
 
           {/* 研究输入框 */}
-          <div className="reveal-line mt-9" style={{ "--d": "240ms" } as React.CSSProperties}>
+          <div className="reveal-line mt-7 md:mt-9" style={{ "--d": "240ms" } as React.CSSProperties}>
             <ResearchComposer variant="hero" onSubmit={startResearch} />
           </div>
 
-          {/* 示例问题：小写字距标签 + 错位双列（非对称，拒绝等距网格） */}
-          <div className="reveal-line mt-12" style={{ "--d": "320ms" } as React.CSSProperties}>
+          {/* 示例问题：小写字距标签 + 双列卡片（移动端单列） */}
+          <div className="reveal-line mt-10 md:mt-16" style={{ "--d": "320ms" } as React.CSSProperties}>
             <div className="mb-4 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground/70">
               Try these examples
             </div>
@@ -81,7 +81,10 @@ export default function HomePage() {
 
       <RightPanel>
         <SourcesStatsPanel items={sourceStats?.items ?? []} />
-        <GraphMiniPanel graph={{ nodes: [], edges: [] }} />
+        <GraphMiniPanel
+          graph={{ nodes: [], edges: [] }}
+          hint="完成首次研究后，实体与关系将在这里连成图谱"
+        />
         <ResearchStatsPanel summary={summary} />
       </RightPanel>
     </>

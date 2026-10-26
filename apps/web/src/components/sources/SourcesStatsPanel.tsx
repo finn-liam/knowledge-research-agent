@@ -9,23 +9,18 @@ export function SourcesStatsPanel({ items }: { items: SourceStatItem[] }) {
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="flex min-w-0 items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
-            <span className="truncate">Sources</span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="shrink-0 cursor-help">
-                  <Info className="h-3.5 w-3.5 text-muted-foreground/70" />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-[260px]">
-                统计自历史所有研究**真实检索到**的来源片段，按类型聚合计数：本地文档、学术论文、网页资源。每次研究完成后自动增长。
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <button className="shrink-0 whitespace-nowrap text-xs font-medium text-primary hover:underline">
-            View all
-          </button>
+        <div className="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
+          <span className="truncate">Sources</span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="shrink-0 cursor-help">
+                <Info className="h-3.5 w-3.5 text-muted-foreground/70" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[260px]">
+              统计自历史所有研究**真实检索到**的来源片段，按类型聚合计数：本地文档、学术论文、网页资源。每次研究完成后自动增长。
+            </TooltipContent>
+          </Tooltip>
         </div>
         <div className="mt-2 divide-y divide-border/60">
           {items.map((item) => (

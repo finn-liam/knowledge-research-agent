@@ -1,18 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import {
-  BarChart3,
-  BookOpen,
-  Database,
-  FileSearch,
-  Home,
-  Layers,
-  Plus,
-  Settings,
-} from "lucide-react";
+import { FileSearch, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { NAV_ITEMS } from "@/components/layout/nav";
 import { UserProfileCard } from "@/components/user/UserProfileCard";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,16 +13,7 @@ import { api } from "@/lib/api";
 import { relativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-const NAV_ITEMS = [
-  { to: "/", label: "Home", icon: Home },
-  { to: "/library", label: "Library", icon: BookOpen },
-  { to: "/knowledge-base", label: "Knowledge Base", icon: Database },
-  { to: "/datasources", label: "Datasources", icon: Layers },
-  { to: "/analytics", label: "Analytics", icon: BarChart3 },
-  { to: "/settings", label: "Settings", icon: Settings },
-];
-
-/** 左侧边栏：New Research / 主导航 / Recent Research / Enterprise Plan */
+/** 左侧边栏：New Research / 主导航 / Recent Research / 用户卡（<lg 隐藏，移动端由顶栏抽屉接管） */
 export function AppSidebar() {
   const router = useRouter();
   const pathname = usePathname();
@@ -42,7 +25,7 @@ export function AppSidebar() {
   });
 
   return (
-    <aside className="flex w-[232px] min-w-0 shrink-0 flex-col border-r bg-secondary/40">
+    <aside className="hidden w-[232px] min-w-0 shrink-0 flex-col border-r bg-secondary/40 lg:flex">
       <div className="p-3">
         <Button
           variant="outline"
@@ -62,7 +45,7 @@ export function AppSidebar() {
               key={to}
               href={to}
               className={cn(
-                "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-300",
+                "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
                 isActive
                   ? "bg-accent text-accent-foreground"
                   : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
@@ -75,7 +58,8 @@ export function AppSidebar() {
         })}
       </nav>
 
-      <div className="mt-5 px-4 text-xs font-medium text-muted-foreground">Recent Research</div>
+      {/* px-6 与导航项文字左缘（12+12px）光学对齐 */}
+      <div className="mt-5 px-6 text-xs font-medium text-muted-foreground">Recent Research</div>
       <ScrollArea className="mt-1 flex-1 px-3">
         {recent && recent.length > 0 ? (
           <div className="space-y-0.5 pb-3">
@@ -83,7 +67,8 @@ export function AppSidebar() {
               <button
                 key={t.id}
                 onClick={() => router.push(`/research/${t.id}`)}
-                className="w-full rounded-lg px-3 py-2 text-left transition-colors duration-300 hover:bg-accent/50"
+                title={t.title || t.query}
+                className="w-full rounded-lg px-3 py-2 text-left transition-colors duration-300 hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
                 <div className="truncate text-[13px] font-medium text-foreground/90">
                   {t.title || t.query}
