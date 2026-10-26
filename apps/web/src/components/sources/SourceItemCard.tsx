@@ -36,7 +36,7 @@ export function SourceItemCard({
     <div
       data-ref-no={source.ref_no}
       className={cn(
-        "w-full max-w-full cursor-pointer rounded-xl border bg-card p-3 transition-all duration-300",
+        "anim-rise-soft w-full max-w-full cursor-pointer rounded-xl border bg-card p-3 transition-all duration-300",
         selected && "border-primary ring-2 ring-primary/30",
         !selected && "hover:border-primary/40",
       )}
@@ -71,7 +71,10 @@ export function SourceItemCard({
       </div>
 
       {expanded && (
-        <div className="mt-2.5 border-t border-border/60 pt-2.5" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="mt-2.5 animate-fade-in border-t border-border/60 pt-2.5"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* 原生滚动区：内容超长在展开区内滚动，收起按钮始终可达 */}
           <div className="max-h-[240px] w-full max-w-full overflow-y-auto whitespace-pre-wrap pr-1 text-[12.5px] leading-relaxed text-foreground/80">
             {source.snippet || "（该来源暂无内容摘要）"}

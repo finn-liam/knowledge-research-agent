@@ -8,8 +8,8 @@ import { AgentStepCard } from "./AgentStepCard";
 function AgentStepCardsInner({ steps }: { steps: StepInfo[] }) {
   return (
     <div className="flex flex-wrap gap-2">
-      {steps.map((step) => (
-        <AgentStepCard key={step.step_key} step={step} />
+      {steps.map((step, i) => (
+        <AgentStepCard key={step.step_key} step={step} index={i} />
       ))}
     </div>
   );

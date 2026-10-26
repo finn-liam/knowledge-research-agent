@@ -23,17 +23,18 @@ const STEP_ICONS: Record<string, LucideIcon> = {
   report_write: FileBarChart,
 };
 
-/** 单张 Agent 步骤卡片：图标 + 名称 + 状态（已完成/处理中/等待中/已暂停） */
-export function AgentStepCard({ step }: { step: StepInfo }) {
+/** 单张 Agent 步骤卡片：图标 + 名称 + 状态（已完成/处理中/等待中/已暂停），按序 stagger 升起 */
+export function AgentStepCard({ step, index = 0 }: { step: StepInfo; index?: number }) {
   const Icon = STEP_ICONS[step.step_key] ?? Database;
   const paused = step.status === "paused";
   return (
     <div
       className={cn(
-        "flex w-[132px] flex-col gap-2 rounded-xl border bg-card p-3 transition-all animate-fade-in",
+        "anim-rise-soft flex w-[132px] flex-col gap-2 rounded-xl border bg-card p-3 transition-all duration-300",
         step.status === "running" && "border-primary/50 shadow-sm",
         paused && "opacity-55",
       )}
+      style={{ "--d": `${Math.min(index, 5) * 60}ms` } as React.CSSProperties}
     >
       <div
         className={cn(

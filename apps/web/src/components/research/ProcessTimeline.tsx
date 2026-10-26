@@ -19,16 +19,16 @@ import { cn } from "@/lib/utils";
 import type { TimelineEntry, TimelineKind } from "@/types";
 
 const KIND_META: Record<TimelineKind, { icon: LucideIcon; cls: string }> = {
-  router: { icon: Route, cls: "bg-violet-50 text-violet-600" },
-  step_started: { icon: Gauge, cls: "bg-accent text-primary" },
-  step_completed: { icon: CheckCircle2, cls: "bg-emerald-50 text-emerald-600" },
-  step_failed: { icon: XCircle, cls: "bg-rose-50 text-rose-600" },
-  step_skipped: { icon: SkipForward, cls: "bg-sky-50 text-sky-600/80" },
-  sources: { icon: Layers, cls: "bg-blue-50 text-blue-600" },
-  grade: { icon: Gauge, cls: "bg-amber-50 text-amber-600" },
-  rewrite: { icon: RefreshCw, cls: "bg-orange-50 text-orange-600" },
-  report_done: { icon: FileCheck2, cls: "bg-emerald-50 text-emerald-600" },
-  error: { icon: AlertCircle, cls: "bg-rose-50 text-rose-600" },
+  router: { icon: Route, cls: "text-violet-600" },
+  step_started: { icon: Gauge, cls: "text-primary" },
+  step_completed: { icon: CheckCircle2, cls: "text-emerald-600" },
+  step_failed: { icon: XCircle, cls: "text-rose-600" },
+  step_skipped: { icon: SkipForward, cls: "text-sky-600/80" },
+  sources: { icon: Layers, cls: "text-blue-600" },
+  grade: { icon: Gauge, cls: "text-amber-600" },
+  rewrite: { icon: RefreshCw, cls: "text-orange-600" },
+  report_done: { icon: FileCheck2, cls: "text-emerald-600" },
+  error: { icon: AlertCircle, cls: "text-rose-600" },
 };
 
 function fmtTime(ts: number): string {
@@ -39,9 +39,9 @@ function TimelineRow({ entry }: { entry: TimelineEntry }) {
   const meta = KIND_META[entry.kind] ?? KIND_META.router;
   const Icon = meta.icon;
   return (
-    <div className="flex items-start gap-2.5 py-1.5">
+    <div className="anim-in-left flex items-start gap-2.5 py-1.5">
       <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md">
-        <Icon className={cn("h-3.5 w-3.5", meta.cls.split(" ")[1])} />
+        <Icon className={cn("h-3.5 w-3.5", meta.cls)} />
       </div>
       <div className="min-w-0 flex-1 text-[12.5px] leading-relaxed text-foreground/80">
         {entry.text}

@@ -47,12 +47,16 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["Inter", "PingFang SC", "Microsoft YaHei", "sans-serif"],
+        sans: ["var(--font-inter)", "Inter", "PingFang SC", "Microsoft YaHei", "sans-serif"],
       },
       keyframes: {
         "fade-in": {
           from: { opacity: "0", transform: "translateY(4px)" },
           to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "slide-left": {
+          from: { opacity: "0", transform: "translateX(-20px)" },
+          to: { opacity: "1", transform: "translateX(0)" },
         },
         pulseSoft: {
           "0%, 100%": { opacity: "1" },
@@ -61,6 +65,7 @@ export default {
       },
       animation: {
         "fade-in": "fade-in 0.3s ease-out",
+        "slide-left": "slide-left 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
         "pulse-soft": "pulseSoft 1.6s ease-in-out infinite",
       },
     },

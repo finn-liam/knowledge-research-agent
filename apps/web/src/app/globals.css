@@ -58,6 +58,14 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "cv02", "cv03", "cv04";
   }
+  /* 浏览器表面主题化：选区与输入光标同属雾蓝，不用系统默认蓝 */
+  ::selection {
+    background: hsl(var(--primary) / 0.18);
+  }
+  textarea,
+  input {
+    caret-color: hsl(var(--primary));
+  }
 }
 
 /* Markdown report typography */
@@ -155,6 +163,34 @@
 }
 .reveal.is-in { opacity: 1; transform: none; }
 
+/* ============ 研究页动态入场（挂载即播，--d 控制 stagger） ============ */
+/* 轻量上浮：步骤卡/来源卡/Agent 头等"组件到达" */
+@keyframes rise-soft {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+/* 用户提问：从右滑入（确认用户动作的方向性） */
+@keyframes in-right {
+  from { opacity: 0; transform: translateX(18px); }
+  to   { opacity: 1; transform: none; }
+}
+/* 时间线条目：从左轻推进（事件流方向） */
+@keyframes in-left {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: none; }
+}
+.anim-rise-soft,
+.anim-in-right,
+.anim-in-left {
+  animation-duration: 0.45s;
+  animation-timing-function: var(--ease-out-expo);
+  animation-fill-mode: both;
+  animation-delay: var(--d, 0ms);
+}
+.anim-rise-soft { animation-name: rise-soft; }
+.anim-in-right  { animation-name: in-right; animation-duration: 0.5s; }
+.anim-in-left   { animation-name: in-left; animation-duration: 0.3s; }
+
 /* 磁吸按钮：跟随段用短平滑，离开用弹簧回弹 */
 .magnetic { transition: transform 0.35s var(--ease-spring); will-change: transform; }
 .magnetic.is-near { transition: transform 0.12s ease-out; }
@@ -164,4 +200,5 @@
   .reveal-line { animation: none; opacity: 1; }
   .reveal { transition: none; opacity: 1; transform: none; }
   .magnetic, .magnetic.is-near { transition: none; }
+  .anim-rise-soft, .anim-in-right, .anim-in-left { animation: none; }
 }

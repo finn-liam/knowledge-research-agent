@@ -4,18 +4,18 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useMounted } from "@/hooks/use-mounted";
 import { useUserStore, userInitials } from "@/features/user/userStore";
 
-/** 用户提问气泡（对齐效果图2 的紫色头像 + 淡紫气泡），头像缩写跟随个性化用户名 */
+/** 用户提问：与 AI 输出同款裸文本样式（无底色无边框），仅以右对齐 + 右侧头像区分角色 */
 export function UserBubble({ content }: { content: string }) {
   const mounted = useMounted();
   const persistedName = useUserStore((s) => s.username);
   return (
-    <div className="flex items-start gap-3">
+    <div className="anim-in-right flex items-start justify-end gap-3">
+      <div className="max-w-[85%] py-0.5 text-[15px] leading-relaxed text-foreground">
+        {content}
+      </div>
       <Avatar className="h-8 w-8">
         <AvatarFallback>{userInitials(mounted ? persistedName : "")}</AvatarFallback>
       </Avatar>
-      <div className="rounded-xl rounded-tl-sm bg-muted/70 px-4 py-2.5 text-sm leading-relaxed text-foreground">
-        {content}
-      </div>
     </div>
   );
 }
