@@ -4,48 +4,49 @@
 
 @layer base {
   :root {
-    --background: 250 30% 99%;
+    /* 雾蓝主题：色相 212°，沿用原淡紫的明度/饱和结构（淡而不灰，冷调） */
+    --background: 212 30% 99%;
     --foreground: 240 10% 15%;
     --card: 0 0% 100%;
     --card-foreground: 240 10% 15%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 15%;
-    --primary: 244 82% 69%;
+    --primary: 212 74% 62%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 245 60% 96%;
-    --secondary-foreground: 244 60% 45%;
-    --muted: 245 30% 96%;
+    --secondary: 212 45% 96%;
+    --secondary-foreground: 212 55% 42%;
+    --muted: 212 30% 96%;
     --muted-foreground: 240 6% 46%;
-    --accent: 245 70% 96%;
-    --accent-foreground: 244 60% 45%;
+    --accent: 212 50% 96%;
+    --accent-foreground: 212 55% 40%;
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 245 25% 92%;
-    --input: 245 25% 90%;
-    --ring: 244 82% 69%;
+    --border: 212 25% 92%;
+    --input: 212 25% 90%;
+    --ring: 212 74% 62%;
     --radius: 0.75rem;
   }
 
   .dark {
-    --background: 248 25% 7%;
+    --background: 214 25% 7%;
     --foreground: 240 20% 96%;
-    --card: 248 22% 10%;
+    --card: 214 22% 10%;
     --card-foreground: 240 20% 96%;
-    --popover: 248 22% 12%;
+    --popover: 214 22% 12%;
     --popover-foreground: 240 20% 96%;
-    --primary: 244 75% 72%;
-    --primary-foreground: 248 40% 10%;
-    --secondary: 248 18% 14%;
-    --secondary-foreground: 244 40% 85%;
-    --muted: 248 15% 16%;
+    --primary: 212 72% 70%;
+    --primary-foreground: 214 40% 10%;
+    --secondary: 214 18% 14%;
+    --secondary-foreground: 212 40% 85%;
+    --muted: 214 15% 16%;
     --muted-foreground: 240 10% 65%;
-    --accent: 248 22% 18%;
-    --accent-foreground: 244 60% 88%;
+    --accent: 214 22% 18%;
+    --accent-foreground: 212 60% 88%;
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 248 15% 20%;
-    --input: 248 15% 24%;
-    --ring: 244 75% 72%;
+    --border: 214 15% 20%;
+    --input: 214 15% 24%;
+    --ring: 212 72% 70%;
   }
 }
 
